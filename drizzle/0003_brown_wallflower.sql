@@ -1,0 +1,1 @@
+ALTER TABLE "acme_sections" ADD COLUMN "display_schema" json DEFAULT '{}'::json NOT NULL;
