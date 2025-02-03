@@ -9,10 +9,10 @@ const config = {
     //domains: ["localhost"],
     remotePatterns: [
       {
-        protocol: "http",
-        hostname: "storage.digprofile.com",
+        protocol: "https",
+        hostname: "minio-p4wwo448sowg8ck408gwgc08.intensivestudy.com.np",
         //hostname: "localhost",
-        port: "50000",
+        port: "443",
         //port: "9000",
         pathname: "/**",
       },
