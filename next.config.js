@@ -5,7 +5,7 @@ const config = {
   reactStrictMode: false,
   ignoreBuildErrors: true,
   images: {
-    domains: ["storage.digprofile.com"],
+    domains: ["minio-p4wwo448sowg8ck408gwgc08.intensivestudy.com.np"],
     //domains: ["localhost"],
     remotePatterns: [
       {
