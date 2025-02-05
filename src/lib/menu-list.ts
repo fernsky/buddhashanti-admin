@@ -10,6 +10,7 @@ import {
   ScanBarcode,
   Store,
   User2Icon,
+  Paperclip,
 } from "lucide-react";
 
 export type Role = "admin" | "superadmin" | "enumerator";
@@ -61,6 +62,13 @@ const menuConfig: Menu[] = [
     roles: ["enumerator"],
   },
   {
+    href: "/collections",
+    label: "My Collections", 
+    icon: Paperclip,
+    roles: ["enumerator"],
+  },
+  
+  {
     href: "/ward",
     label: "Wards",
     icon: AreaChart,
@@ -92,6 +100,14 @@ const menuConfig: Menu[] = [
     icon: UsersRound,
     roles: ["admin", "superadmin"],
   },
+{
+    href: "/submissions",
+    label: "Submissions",
+    icon: Paperclip, 
+    roles: ["admin", "superadmin"],
+    submenus: [],
+  },
+
   {
     href: "/individuals",
     label: "Individuals",
@@ -125,3 +141,4 @@ export function getMenuList(pathname: string, userRole: Role): Group[] {
     },
   ];
 }
+

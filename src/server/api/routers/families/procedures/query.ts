@@ -170,6 +170,36 @@ export const getById = publicProcedure
     return result;
   });
 
+export const getByAreaCode = publicProcedure
+  .input(z.object({ areaCode: z.string() }))
+  .query(async ({ ctx, input }) => {
+    const familyDetails = await ctx.db
+      .select({
+        id: family.id,
+        headName: family.headName,
+        wardNo: family.wardNo,
+        lat: sql<number>`ST_Y(${family.gps}::geometry)`,
+        lng: sql<number>`ST_X(${family.gps}::geometry)`,
+        gpsAccuracy: family.gpsAccuracy,
+        enumeratorName: family.enumeratorName,  // Add this line
+      })
+      .from(family)
+      .where(eq(family.areaCode, input.areaCode));
+
+    return familyDetails.map(family => ({
+      id: family.id,
+      type: "family",  // Add this line
+      familyHeadName: family.headName,
+      wardNo: family.wardNo,
+      enumeratorName: family.enumeratorName,  // Add this line
+      gpsPoint: family.lat && family.lng ? {
+        lat: family.lat,
+        lng: family.lng,
+        accuracy: family.gpsAccuracy ?? 0
+      } : null
+    }));
+  });
+
 export const getStats = publicProcedure.query(async ({ ctx }) => {
   const stats = await ctx.db
     .select({

@@ -112,14 +112,43 @@ export const getById = publicProcedure
         }
       }
     } catch (error) {
-      throw new TRPCError({
+      /*throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
         message: "Failed to generate presigned URLs",
         cause: error,
-      });
+      });*/
+      console.error(error);
     }
 
     return building[0];
+  });
+
+export const getByAreaCode = publicProcedure
+  .input(z.object({ areaCode: z.string() }))
+  .query(async ({ ctx, input }) => {
+    const buildingDetails = await ctx.db
+      .select({
+        id: buildings.id,
+        enumeratorName: buildings.enumeratorName,
+        locality: buildings.locality,
+        lat: sql<number>`ST_Y(${buildings.gps}::geometry)`,
+        lng: sql<number>`ST_X(${buildings.gps}::geometry)`,
+        gpsAccuracy: buildings.gpsAccuracy,
+      })
+      .from(buildings)
+      .where(eq(buildings.tmpAreaCode, input.areaCode));
+
+    return buildingDetails.map(building => ({
+      id: building.id,
+      type: "building",
+      enumeratorName: building.enumeratorName,
+      locality: building.locality,
+      gpsPoint: building.lat && building.lng ? {
+        lat: building.lat,
+        lng: building.lng,
+        accuracy: building.gpsAccuracy ?? 0
+      } : null
+    }));
   });
 
 export const getStats = publicProcedure.query(async ({ ctx }) => {
@@ -133,3 +162,4 @@ export const getStats = publicProcedure.query(async ({ ctx }) => {
 
   return stats[0];
 });
+
