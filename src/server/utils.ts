@@ -113,6 +113,6 @@ export const fetchSurveySubmissions = async (
     }
   } catch (error) {
     console.log(error);
-    throw new Error(`Failed to get submissions: ${(error as any).message}`);
+    // throw new Error(`Failed to get submissions: ${(error as any).message}`);
   }
 };

@@ -14,20 +14,93 @@ export const CustomAudioPlayer = ({
   const [duration, setDuration] = useState(0);
   const [seek, setSeek] = useState(0);
   const [volume, setVolume] = useState(1);
+  const [error, setError] = useState<string | null>(null);
   const soundRef = useRef<Howl | null>(null);
 
   useEffect(() => {
-    soundRef.current = new Howl({
-      src: [src],
-      html5: true,
-      onload: () => {
-        setDuration(soundRef.current?.duration() ?? 0);
-      },
-      onplay: () => setPlaying(true),
-      onpause: () => setPlaying(false),
-      onstop: () => setPlaying(false),
-    });
+    const initializeAudio = () => {
+      if (soundRef.current) {
+        soundRef.current.unload();
+      }
 
+      soundRef.current = new Howl({
+        src: [src],
+        html5: true, // Force HTML5 Audio to handle streaming
+        format: ["mp3", "m4a", "mpeg", "opus", "ogg", "wav", "aac"],
+        preload: true,
+        pool: 1,
+        onload: () => {
+          setDuration(soundRef.current?.duration() ?? 0);
+          setError(null);
+        },
+        onloaderror: (id, error) => {
+          console.error("Loading error:", error);
+          setError("Failed to load audio");
+          // Fallback to native audio element if Howler fails
+          fallbackToNativeAudio();
+        },
+        onplayerror: (id, error) => {
+          console.error("Playback error:", error);
+          setError("Playback error");
+          // Try to recover playback
+          if (soundRef.current) {
+            soundRef.current.once("unlock", () => {
+              soundRef.current?.play();
+            });
+          }
+        },
+        onplay: () => setPlaying(true),
+        onpause: () => setPlaying(false),
+        onstop: () => setPlaying(false),
+      });
+    };
+
+    const fallbackToNativeAudio = () => {
+      // Create a native HTML5 audio element as fallback
+      soundRef.current?.unload();
+      const audio = new Audio(src);
+      audio.addEventListener("loadedmetadata", () => {
+        setDuration(audio.duration);
+        setError(null);
+      });
+      audio.addEventListener("timeupdate", () => {
+        setSeek(audio.currentTime);
+      });
+      audio.addEventListener("play", () => setPlaying(true));
+      audio.addEventListener("pause", () => setPlaying(false));
+      audio.addEventListener("error", (e) => {
+        console.error("Native audio error:", e);
+        setError("Audio format not supported");
+      });
+
+      // Create a Howl-like wrapper for the native audio element
+      soundRef.current = {
+        play: () => audio.play(),
+        pause: () => audio.pause(),
+        seek: (time?: number) => {
+          if (typeof time === "number") {
+            audio.currentTime = time;
+            return time;
+          }
+          return audio.currentTime;
+        },
+        volume: (vol?: number) => {
+          if (typeof vol === "number") {
+            audio.volume = vol;
+            return vol;
+          }
+          return audio.volume;
+        },
+        duration: () => audio.duration,
+        unload: () => {
+          audio.pause();
+          audio.src = "";
+          audio.remove();
+        },
+      } as unknown as Howl;
+    };
+
+    initializeAudio();
     return () => {
       soundRef.current?.unload();
     };
@@ -73,6 +146,7 @@ export const CustomAudioPlayer = ({
 
   return (
     <div className={cn("w-full rounded-lg border bg-card p-4", className)}>
+      {error && <div className="text-sm text-red-500 mb-2">{error}</div>}
       <div className="flex items-center gap-4">
         <button
           onClick={togglePlayPause}
