@@ -10,6 +10,7 @@ export const updateAreaStatusSchema = z.object({
     "asked_for_completion",
     "asked_for_revision_completion",
     "asked_for_withdrawl",
+    "completed",
   ]),
   message: z.string().optional(),
 });
