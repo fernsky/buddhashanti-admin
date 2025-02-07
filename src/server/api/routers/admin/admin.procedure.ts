@@ -64,7 +64,7 @@ export const adminRouter = createTRPCRouter({
 
       const data = await baseQuery
         .orderBy(sortFn(sortableFields[sortField]))
-        .limit(pageSize)
+        .limit(100)
         .offset(offset);
 
       return {

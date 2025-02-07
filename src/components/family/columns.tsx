@@ -13,7 +13,9 @@ import {
   Edit2,
   Clock,
   User,
+  Eye,
 } from "lucide-react";
+import Link from "next/link";
 
 export const familyColumns = (
   onSort: (field: string) => void,
@@ -155,6 +157,21 @@ export const familyColumns = (
           <StatusIcon className="h-3.5 w-3.5" />
           {statusInfo.label}
         </Badge>
+      );
+    },
+  },
+  {
+    id: "actions",
+    header: "Actions",
+    cell: ({ row }) => {
+      return (
+        <div className="flex items-center gap-2">
+          <Link href={`/families/${row.original.id}`}>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Eye className="h-4 w-4" />
+            </Button>
+          </Link>
+        </div>
       );
     },
   },
