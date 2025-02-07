@@ -58,7 +58,7 @@ const worker = new Worker<SyncJobData>(
       const formData = forms[0] as unknown as SurveyFormData;
       const now = new Date();
       const lastFetched = formData.lastFetched ?? new Date(0);
-
+      /*
       // Fetch submissions between lastFetched and now
       await fetchSurveySubmissions(
         {
@@ -80,6 +80,7 @@ const worker = new Worker<SyncJobData>(
         .update(surveyForms)
         .set({ lastFetched: now })
         .where(eq(surveyForms.id, formId));
+        */
     } catch (error) {
       console.error(`Error processing form ${formId}:`, error);
       if (error instanceof Error) {

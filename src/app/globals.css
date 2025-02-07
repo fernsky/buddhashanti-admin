@@ -141,8 +141,80 @@
   color: hsl(var(--muted-foreground)) !important;
 }
 
+/* Plyr audio player customization */
+.plyr-react-container {
+  min-height: 50px; /* Prevent layout shift */
+}
+
+.plyr__audio-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.plyr--audio {
+  width: 100%;
+  margin: 0;
+}
+
+.plyr--audio .plyr__controls {
+  background: transparent !important;
+  color: hsl(var(--foreground)) !important;
+  padding: 10px !important;
+  border-radius: var(--radius);
+}
+
+.plyr__volume {
+  min-width: 80px !important;
+}
+
+/* Ensure proper stacking */
+.plyr__video-wrapper {
+  position: relative !important;
+  z-index: 1;
+}
+
+/* Remove duplicate controls */
+audio::-webkit-media-controls {
+  display: none !important;
+}
+
+audio::-webkit-media-controls-panel {
+  display: none !important;
+}
+
 /* Add more custom styles as needed */
 
 .leaflet-pane {
     z-index: 0 !important;
+}
+
+/* MediaElement Player customization */
+.mejs__container {
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+.mejs__controls {
+  background: transparent !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+.mejs__time-rail {
+  margin: 0 10px !important;
+}
+
+.mejs__time-total {
+  background: hsl(var(--muted)) !important;
+}
+
+.mejs__time-current {
+  background: hsl(var(--primary)) !important;
+}
+
+.mejs__time {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+.mejs__button > button {
+  background-color: transparent !important;
 }
