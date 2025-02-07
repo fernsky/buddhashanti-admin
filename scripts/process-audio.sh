@@ -9,8 +9,8 @@ BUCKETS=("buddhashanti" "kerabari")
 
 # Directory setup
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-TEMP_DIR="${SCRIPT_DIR}/temp"
-LOG_DIR="${SCRIPT_DIR}/logs"
+TEMP_DIR="/data/backups/old-server/audio-processing/temp"
+LOG_DIR="/data/backups/old-server/audio-processing/logs"
 PROCESSED_LOG="${LOG_DIR}/processed_files.txt"
 ERROR_LOG="${LOG_DIR}/error_log.txt"
 
@@ -59,7 +59,7 @@ process_file() {
     if grep -q "${bucket}/${file}" "${PROCESSED_LOG}"; then
         log "Skipping already processed file: ${bucket}/${file}"
         return
-    }
+    fi
     
     log "Processing: ${bucket}/${file}"
     
@@ -69,21 +69,34 @@ process_file() {
         return
     fi
     
-    # Process with ffmpeg
-    if ffmpeg -y -i "${temp_input}" -c:a aac -b:a 128k -ar 44100 -movflags +faststart "${temp_output}" 2>> "${ERROR_LOG}"; then
-        # Upload processed file
-        if mc cp "${temp_output}" "myminio/${bucket}/${file}"; then
-            echo "${bucket}/${file}" >> "${PROCESSED_LOG}"
-            log "Successfully processed and uploaded: ${bucket}/${file}"
+    # Process with ffmpeg (fixed command)
+    if ffmpeg -hide_banner -loglevel error -y -i "${temp_input}" \
+        -c:a aac -b:a 128k -ar 44100 -movflags +faststart \
+        -stats "${temp_output}" 2>> "${ERROR_LOG}"; then
+        
+        # Verify the output file exists and has size > 0
+        if [[ -f "${temp_output}" ]] && [[ -s "${temp_output}" ]]; then
+            # Upload processed file
+            if mc cp "${temp_output}" "myminio/${bucket}/${file}"; then
+                echo "${bucket}/${file}" >> "${PROCESSED_LOG}"
+                log "Successfully processed and uploaded: ${bucket}/${file}"
+            else
+                error "Failed to upload processed file: ${bucket}/${file}"
+            fi
         else
-            error "Failed to upload processed file: ${bucket}/${file}"
+            error "FFmpeg output file is missing or empty: ${bucket}/${file}"
         fi
     else
-        error "Failed to process file: ${bucket}/${file}"
+        error "FFmpeg failed to process file: ${bucket}/${file}"
     fi
     
-    # Cleanup
-    rm -f "${temp_input}" "${temp_output}"
+    # Cleanup with error checking
+    if [[ -f "${temp_input}" ]]; then
+        rm -f "${temp_input}"
+    fi
+    if [[ -f "${temp_output}" ]]; then
+        rm -f "${temp_output}"
+    fi
 }
 
 # Main processing loop
