@@ -54,6 +54,7 @@ process_file() {
     local base_name=$(basename "$file")
     local temp_input="${TEMP_DIR}/${base_name}"
     local temp_output="${TEMP_DIR}/processed_${base_name}"
+    local TIMEOUT=600  # 10 minutes in seconds
     
     # Check if file was already processed
     if grep -q "${bucket}/${file}" "${PROCESSED_LOG}"; then
@@ -69,10 +70,18 @@ process_file() {
         return
     fi
     
-    # Process with ffmpeg (fixed command)
-    if ffmpeg -hide_banner -loglevel error -y -i "${temp_input}" \
+    # Process with ffmpeg using timeout command
+    if timeout ${TIMEOUT}s ffmpeg -nostdin -hide_banner -loglevel error -y \
+        -i "${temp_input}" \
         -c:a aac -b:a 128k -ar 44100 -movflags +faststart \
         -stats "${temp_output}" 2>> "${ERROR_LOG}"; then
+        
+        # Check if process was killed by timeout
+        if [ $? -eq 124 ]; then
+            error "FFmpeg process timed out after ${TIMEOUT} seconds for file: ${bucket}/${file}"
+            rm -f "${temp_output}"  # Clean up incomplete file
+            return
+        fi
         
         # Verify the output file exists and has size > 0
         if [[ -f "${temp_output}" ]] && [[ -s "${temp_output}" ]]; then
@@ -90,13 +99,8 @@ process_file() {
         error "FFmpeg failed to process file: ${bucket}/${file}"
     fi
     
-    # Cleanup with error checking
-    if [[ -f "${temp_input}" ]]; then
-        rm -f "${temp_input}"
-    fi
-    if [[ -f "${temp_output}" ]]; then
-        rm -f "${temp_output}"
-    fi
+    # Cleanup
+    rm -f "${temp_input}" "${temp_output}"
 }
 
 # Main processing loop
