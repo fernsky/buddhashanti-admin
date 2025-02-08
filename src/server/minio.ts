@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 import * as Minio from "minio";
 import { env } from "@/env";
+import * as https from "https";
 
 dotenv.config();
 

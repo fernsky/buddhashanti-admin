@@ -156,3 +156,11 @@ export const isValidGeoJSON = (geojson: any): boolean => {
 
   return validateCoords(geojson.coordinates);
 };
+
+export const createTimeout = (ms: number) => {
+  return new Promise((_, reject) => {
+    setTimeout(() => {
+      reject(new Error(`Operation timed out after ${ms}ms`));
+    }, ms);
+  });
+};

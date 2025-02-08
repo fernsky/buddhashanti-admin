@@ -110,40 +110,54 @@ export const getById = publicProcedure
       where: eq(surveyAttachments.dataId, input.id),
     });
 
+    const createTimeout = (ms: number) =>
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Operation timed out")), ms),
+      );
+
     try {
       // Process the attachments and create presigned URLs
       for (const attachment of attachments) {
+        const timeout = 20000; // 20 seconds timeout
+
         if (attachment.type === "business_image") {
           console.log("Fetching business image");
-          businessEntity[0].businessImage = await ctx.minio.presignedGetObject(
-            env.BUCKET_NAME,
-            attachment.name,
-            24 * 60 * 60, // 24 hours expiry
-          );
+          businessEntity[0].businessImage = (await Promise.race([
+            ctx.minio.presignedGetObject(
+              env.BUCKET_NAME,
+              attachment.name,
+              24 * 60 * 60, // 24 hours expiry
+            ),
+            createTimeout(timeout),
+          ])) as string;
         }
         if (attachment.type === "business_selfie") {
-          businessEntity[0].enumeratorSelfie =
-            await ctx.minio.presignedGetObject(
+          businessEntity[0].enumeratorSelfie = (await Promise.race([
+            ctx.minio.presignedGetObject(
               env.BUCKET_NAME,
               attachment.name,
               24 * 60 * 60,
-            );
+            ),
+            createTimeout(timeout),
+          ])) as string;
         }
         if (attachment.type === "audio_monitoring") {
-          businessEntity[0].surveyAudioRecording =
-            await ctx.minio.presignedGetObject(
+          businessEntity[0].surveyAudioRecording = (await Promise.race([
+            ctx.minio.presignedGetObject(
               env.BUCKET_NAME,
               attachment.name,
               24 * 60 * 60,
-            );
+            ),
+            createTimeout(timeout),
+          ])) as string;
         }
       }
     } catch (error) {
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to generate presigned URLs",
-        cause: error,
-      });
+      // throw new TRPCError({
+      //   code: "INTERNAL_SERVER_ERROR",
+      //   message: "Failed to generate presigned URLs",
+      //   cause: error,
+      // });
     }
 
     const result: BusinessResult = {
@@ -156,8 +170,6 @@ export const getById = publicProcedure
     return result;
   });
 
-  
-
 export const getByAreaCode = publicProcedure
   .input(z.object({ areaCode: z.string() }))
   .query(async ({ ctx, input }) => {
@@ -169,22 +181,25 @@ export const getByAreaCode = publicProcedure
         lat: sql<number>`ST_Y(${business.gps}::geometry)`,
         lng: sql<number>`ST_X(${business.gps}::geometry)`,
         gpsAccuracy: business.gpsAccuracy,
-        enumeratorName: business.enumeratorName,  // Add this line
+        enumeratorName: business.enumeratorName, // Add this line
       })
       .from(business)
       .where(eq(business.areaCode, parseInt(input.areaCode)));
 
-    return businessDetails.map(business => ({
+    return businessDetails.map((business) => ({
       id: business.id,
-      type:"business",
+      type: "business",
       name: business.businessName,
       wardNo: business.wardId?.toString(),
-      enumeratorName: business.enumeratorName,  // Add this line
-      gpsPoint: business.lat && business.lng ? {
-        lat: business.lat,
-        lng: business.lng,
-        accuracy: business.gpsAccuracy ?? 0
-      } : null
+      enumeratorName: business.enumeratorName, // Add this line
+      gpsPoint:
+        business.lat && business.lng
+          ? {
+              lat: business.lat,
+              lng: business.lng,
+              accuracy: business.gpsAccuracy ?? 0,
+            }
+          : null,
     }));
   });
 

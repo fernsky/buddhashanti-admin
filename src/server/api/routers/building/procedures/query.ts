@@ -85,39 +85,55 @@ export const getById = publicProcedure
       });
     }
 
+    const createTimeout = (ms: number) =>
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Operation timed out")), ms),
+      );
+
     try {
       // Process the attachments and create presigned URLs
       for (const attachment of attachments) {
+        const timeout = 20000; // 20 seconds timeout
+
         if (attachment.type === "building_image") {
           console.log("Fetching building image");
-          building[0].buildingImage = await ctx.minio.presignedGetObject(
-            env.BUCKET_NAME,
-            attachment.name,
-            24 * 60 * 60, // 24 hours expiry
-          );
+          building[0].buildingImage = (await Promise.race([
+            ctx.minio.presignedGetObject(
+              env.BUCKET_NAME,
+              attachment.name,
+              24 * 60 * 60, // 24 hours expiry
+            ),
+            createTimeout(timeout),
+          ])) as string;
         }
         if (attachment.type === "building_selfie") {
-          building[0].enumeratorSelfie = await ctx.minio.presignedGetObject(
-            env.BUCKET_NAME,
-            attachment.name,
-            24 * 60 * 60,
-          );
+          building[0].enumeratorSelfie = (await Promise.race([
+            ctx.minio.presignedGetObject(
+              env.BUCKET_NAME,
+              attachment.name,
+              24 * 60 * 60,
+            ),
+            createTimeout(timeout),
+          ])) as string;
         }
         if (attachment.type === "audio_monitoring") {
-          building[0].surveyAudioRecording = await ctx.minio.presignedGetObject(
-            env.BUCKET_NAME,
-            attachment.name,
-            24 * 60 * 60,
-          );
+          building[0].surveyAudioRecording = (await Promise.race([
+            ctx.minio.presignedGetObject(
+              env.BUCKET_NAME,
+              attachment.name,
+              24 * 60 * 60,
+            ),
+            createTimeout(timeout),
+          ])) as string;
         }
       }
     } catch (error) {
-      /*throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to generate presigned URLs",
-        cause: error,
-      });*/
       console.error(error);
+      // throw new TRPCError({
+      //   code: "INTERNAL_SERVER_ERROR",
+      //   message: "Failed to generate presigned URLs",
+      //   cause: error,
+      // });
     }
 
     return building[0];
@@ -138,16 +154,19 @@ export const getByAreaCode = publicProcedure
       .from(buildings)
       .where(eq(buildings.tmpAreaCode, input.areaCode));
 
-    return buildingDetails.map(building => ({
+    return buildingDetails.map((building) => ({
       id: building.id,
       type: "building",
       enumeratorName: building.enumeratorName,
       locality: building.locality,
-      gpsPoint: building.lat && building.lng ? {
-        lat: building.lat,
-        lng: building.lng,
-        accuracy: building.gpsAccuracy ?? 0
-      } : null
+      gpsPoint:
+        building.lat && building.lng
+          ? {
+              lat: building.lat,
+              lng: building.lng,
+              accuracy: building.gpsAccuracy ?? 0,
+            }
+          : null,
     }));
   });
 
@@ -162,4 +181,3 @@ export const getStats = publicProcedure.query(async ({ ctx }) => {
 
   return stats[0];
 });
-
