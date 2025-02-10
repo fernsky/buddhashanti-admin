@@ -59,8 +59,8 @@ export const areaManagementRouter = createTRPCRouter({
         await tx
           .update(areas)
           .set({
-            areaStatus: "unassigned",
-            assignedTo: null,
+            areaStatus: "completed",
+            assignedTo: null,  // This line already sets assignedTo to null
           })
           .where(eq(areas.id, input.areaId));
 
@@ -69,7 +69,7 @@ export const areaManagementRouter = createTRPCRouter({
           id: v4(),
           areaId: input.areaId,
           assignedTo: ctx.user.id,
-          status: "unassigned",
+          status: "completed",
         });
       });
 
@@ -224,10 +224,7 @@ export const areaManagementRouter = createTRPCRouter({
           .set({
             areaStatus: input.newStatus,
             assignedTo:
-              input.newStatus === "unassigned" ||
-              input.newStatus === "completed"
-                ? null
-                : area.assignedTo,
+              input.newStatus === "unassigned" ? null : area.assignedTo,
           })
           .where(eq(areas.id, input.areaId));
 
