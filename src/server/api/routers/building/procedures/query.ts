@@ -85,55 +85,39 @@ export const getById = publicProcedure
       });
     }
 
-    const createTimeout = (ms: number) =>
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Operation timed out")), ms),
-      );
-
     try {
       // Process the attachments and create presigned URLs
       for (const attachment of attachments) {
-        const timeout = 20000; // 20 seconds timeout
-
         if (attachment.type === "building_image") {
           console.log("Fetching building image");
-          building[0].buildingImage = (await Promise.race([
-            ctx.minio.presignedGetObject(
-              env.BUCKET_NAME,
-              attachment.name,
-              24 * 60 * 60, // 24 hours expiry
-            ),
-            createTimeout(timeout),
-          ])) as string;
+          building[0].buildingImage = await ctx.minio.presignedGetObject(
+            env.BUCKET_NAME,
+            attachment.name,
+            24 * 60 * 60, // 24 hours expiry
+          );
         }
         if (attachment.type === "building_selfie") {
-          building[0].enumeratorSelfie = (await Promise.race([
-            ctx.minio.presignedGetObject(
-              env.BUCKET_NAME,
-              attachment.name,
-              24 * 60 * 60,
-            ),
-            createTimeout(timeout),
-          ])) as string;
+          building[0].enumeratorSelfie = await ctx.minio.presignedGetObject(
+            env.BUCKET_NAME,
+            attachment.name,
+            24 * 60 * 60,
+          );
         }
         if (attachment.type === "audio_monitoring") {
-          building[0].surveyAudioRecording = (await Promise.race([
-            ctx.minio.presignedGetObject(
-              env.BUCKET_NAME,
-              attachment.name,
-              24 * 60 * 60,
-            ),
-            createTimeout(timeout),
-          ])) as string;
+          building[0].surveyAudioRecording = await ctx.minio.presignedGetObject(
+            env.BUCKET_NAME,
+            attachment.name,
+            24 * 60 * 60,
+          );
         }
       }
     } catch (error) {
+      /*throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to generate presigned URLs",
+        cause: error,
+      });*/
       console.error(error);
-      // throw new TRPCError({
-      //   code: "INTERNAL_SERVER_ERROR",
-      //   message: "Failed to generate presigned URLs",
-      //   cause: error,
-      // });
     }
 
     return building[0];
@@ -154,20 +138,66 @@ export const getByAreaCode = publicProcedure
       .from(buildings)
       .where(eq(buildings.tmpAreaCode, input.areaCode));
 
-    return buildingDetails.map((building) => ({
+    return buildingDetails.map(building => ({
       id: building.id,
       type: "building",
       enumeratorName: building.enumeratorName,
       locality: building.locality,
-      gpsPoint:
-        building.lat && building.lng
-          ? {
-              lat: building.lat,
-              lng: building.lng,
-              accuracy: building.gpsAccuracy ?? 0,
-            }
-          : null,
+      gpsPoint: building.lat && building.lng ? {
+        lat: building.lat,
+        lng: building.lng,
+        accuracy: building.gpsAccuracy ?? 0
+      } : null
     }));
+  });
+
+export const getByEnumeratorName = publicProcedure
+  .input(z.object({ enumeratorName: z.string() }))
+  .query(async ({ ctx, input }) => {
+    const buildingDetails = await ctx.db
+      .select({
+        id: buildings.id,
+        enumeratorName: buildings.enumeratorName,
+        locality: buildings.locality,
+        lat: sql<number>`ST_Y(${buildings.gps}::geometry)`,
+        lng: sql<number>`ST_X(${buildings.gps}::geometry)`,
+        gpsAccuracy: buildings.gpsAccuracy,
+        areaCode: buildings.tmpAreaCode
+      })
+      .from(buildings)
+      .where(ilike(buildings.enumeratorName, `%${input.enumeratorName}%`));
+
+    return buildingDetails.map(building => ({
+      id: building.id,
+      type: "building",
+      enumeratorName: building.enumeratorName,
+      areaCode: building.areaCode,
+      locality: building.locality,
+      gpsPoint: building.lat && building.lng ? {
+        lat: building.lat,
+        lng: building.lng,
+        accuracy: building.gpsAccuracy ?? 0
+      } : null
+    }));
+  });
+
+export const getAreaCodesByEnumeratorName = publicProcedure
+  .input(z.object({ enumeratorName: z.string() }))
+  .query(async ({ ctx, input }) => {
+    const results = await ctx.db
+      .selectDistinct({
+        areaCode: buildings.tmpAreaCode,
+      })
+      .from(buildings)
+      .where(
+        and(
+          eq(buildings.enumeratorName, input.enumeratorName),
+          sql`${buildings.tmpAreaCode} IS NOT NULL`
+        )
+      )
+      .orderBy(buildings.tmpAreaCode);
+
+    return results.map(result => result.areaCode);
   });
 
 export const getStats = publicProcedure.query(async ({ ctx }) => {
@@ -180,4 +210,16 @@ export const getStats = publicProcedure.query(async ({ ctx }) => {
     .from(buildings);
 
   return stats[0];
+});
+
+export const getEnumeratorNames = publicProcedure.query(async ({ ctx }) => {
+  const results = await ctx.db
+    .selectDistinct({
+      enumeratorName: buildings.enumeratorName,
+    })
+    .from(buildings)
+    .where(sql`${buildings.enumeratorName} IS NOT NULL`)
+    .orderBy(buildings.enumeratorName);
+
+  return results.map(result => result.enumeratorName);
 });

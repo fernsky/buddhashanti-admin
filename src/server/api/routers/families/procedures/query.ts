@@ -12,7 +12,6 @@ import { TRPCError } from "@trpc/server";
 import { env } from "@/env";
 import { FamilyResult } from "../types";
 import buddhashantiAgriculturalLand from "@/server/db/schema/family/agricultural-lands";
-import { createTimeout } from "@/lib/utils";
 
 export const getAll = publicProcedure
   .input(familyQuerySchema)
@@ -128,45 +127,35 @@ export const getById = publicProcedure
     try {
       // Process the attachments and create presigned URLs
       for (const attachment of attachments) {
-        const timeout = 20000; // 20 seconds timeout
-
         if (attachment.type === "family_head_image") {
-          familyEntity[0].familyImage = (await Promise.race([
-            ctx.minio.presignedGetObject(
-              env.BUCKET_NAME,
-              attachment.name,
-              24 * 60 * 60, // 24 hours expiry
-            ),
-            createTimeout(timeout),
-          ])) as string;
+          familyEntity[0].familyImage = await ctx.minio.presignedGetObject(
+            env.BUCKET_NAME,
+            attachment.name,
+            24 * 60 * 60, // 24 hours expiry
+          );
         }
         if (attachment.type === "family_head_selfie") {
-          familyEntity[0].enumeratorSelfie = (await Promise.race([
-            ctx.minio.presignedGetObject(
-              env.BUCKET_NAME,
-              attachment.name,
-              24 * 60 * 60,
-            ),
-            createTimeout(timeout),
-          ])) as string;
+          familyEntity[0].enumeratorSelfie = await ctx.minio.presignedGetObject(
+            env.BUCKET_NAME,
+            attachment.name,
+            24 * 60 * 60,
+          );
         }
         if (attachment.type === "audio_monitoring") {
-          familyEntity[0].surveyAudioRecording = (await Promise.race([
-            ctx.minio.presignedGetObject(
+          familyEntity[0].surveyAudioRecording =
+            await ctx.minio.presignedGetObject(
               env.BUCKET_NAME,
               attachment.name,
               24 * 60 * 60,
-            ),
-            createTimeout(timeout),
-          ])) as string;
+            );
         }
       }
     } catch (error) {
-      // throw new TRPCError({
-      //   code: "INTERNAL_SERVER_ERROR",
-      //   message: "Failed to generate presigned URLs",
-      //   cause: error,
-      // });
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to generate presigned URLs",
+        cause: error,
+      });
     }
 
     const result: FamilyResult = {
@@ -192,25 +181,52 @@ export const getByAreaCode = publicProcedure
         lat: sql<number>`ST_Y(${family.gps}::geometry)`,
         lng: sql<number>`ST_X(${family.gps}::geometry)`,
         gpsAccuracy: family.gpsAccuracy,
-        enumeratorName: family.enumeratorName, // Add this line
+        enumeratorName: family.enumeratorName,  // Add this line
       })
       .from(family)
       .where(eq(family.areaCode, input.areaCode));
 
-    return familyDetails.map((family) => ({
+    return familyDetails.map(family => ({
       id: family.id,
-      type: "family", // Add this line
+      type: "family",  // Add this line
       familyHeadName: family.headName,
       wardNo: family.wardNo,
-      enumeratorName: family.enumeratorName, // Add this line
-      gpsPoint:
-        family.lat && family.lng
-          ? {
-              lat: family.lat,
-              lng: family.lng,
-              accuracy: family.gpsAccuracy ?? 0,
-            }
-          : null,
+      enumeratorName: family.enumeratorName,  // Add this line
+      gpsPoint: family.lat && family.lng ? {
+        lat: family.lat,
+        lng: family.lng,
+        accuracy: family.gpsAccuracy ?? 0
+      } : null
+    }));
+  });
+
+export const getByEnumeratorName = publicProcedure
+  .input(z.object({ enumeratorName: z.string() }))
+  .query(async ({ ctx, input }) => {
+    const familyDetails = await ctx.db
+      .select({
+        id: family.id,
+        headName: family.headName,
+        wardNo: family.wardNo,
+        lat: sql<number>`ST_Y(${family.gps}::geometry)`,
+        lng: sql<number>`ST_X(${family.gps}::geometry)`,
+        gpsAccuracy: family.gpsAccuracy,
+        enumeratorName: family.enumeratorName,
+      })
+      .from(family)
+      .where(ilike(family.enumeratorName, `%${input.enumeratorName}%`));
+
+    return familyDetails.map(family => ({
+      id: family.id,
+      type: "family",
+      name: family.headName,
+      wardNo: family.wardNo,
+      enumeratorName: family.enumeratorName,
+      gpsPoint: family.lat && family.lng ? {
+        lat: family.lat,
+        lng: family.lng,
+        accuracy: family.gpsAccuracy ?? 0
+      } : null
     }));
   });
 
@@ -225,3 +241,34 @@ export const getStats = publicProcedure.query(async ({ ctx }) => {
 
   return stats[0];
 });
+
+export const getEnumeratorNames = publicProcedure.query(async ({ ctx }) => {
+  const results = await ctx.db
+    .selectDistinct({
+      enumeratorName: family.enumeratorName,
+    })
+    .from(family)
+    .where(sql`${family.enumeratorName} IS NOT NULL`)
+    .orderBy(family.enumeratorName);
+
+  return results.map(result => result.enumeratorName);
+});
+
+export const getAreaCodesByEnumeratorName = publicProcedure
+  .input(z.object({ enumeratorName: z.string() }))
+  .query(async ({ ctx, input }) => {
+    const results = await ctx.db
+      .selectDistinct({
+        areaCode: family.areaCode,
+      })
+      .from(family)
+      .where(
+        and(
+          eq(family.enumeratorName, input.enumeratorName),
+          sql`${family.areaCode} IS NOT NULL`
+        )
+      )
+      .orderBy(family.areaCode);
+
+    return results.map(result => result.areaCode);
+  });
