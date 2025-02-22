@@ -2,7 +2,7 @@ import { sql } from "drizzle-orm";
 import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
 import { users, areas, surveyData, wards } from "@/server/db/schema/basic";
-import { kerabariIndividual } from "@/server/db/schema/family/individual";
+import { buddhashantiIndividual } from "@/server/db/schema/family/individual";
 import { and, count, eq } from "drizzle-orm";
 import { db } from "@/server/db";
 
@@ -27,16 +27,16 @@ export const getGenderDistribution = publicProcedure
   .query(async ({ ctx, input }) => {
     const query = ctx.db
       .select({
-        gender: kerabariIndividual.gender,
+        gender: buddhashantiIndividual.gender,
         count: sql<number>`count(*)::int`,
       })
-      .from(kerabariIndividual);
+      .from(buddhashantiIndividual);
 
     if (input.wardNumber) {
-      query.where(eq(kerabariIndividual.wardNo, input.wardNumber));
+      query.where(eq(buddhashantiIndividual.wardNo, input.wardNumber));
     }
 
-    return await query.groupBy(kerabariIndividual.gender);
+    return await query.groupBy(buddhashantiIndividual.gender);
   });
 
 export const getAgeDistribution = publicProcedure
@@ -56,7 +56,7 @@ export const getAgeDistribution = publicProcedure
 
     return await ctx.db.execute(sql`
       SELECT ${sql.raw(ageRanges)} as age_group, COUNT(*)::int as count
-      FROM ${kerabariIndividual}
+      FROM ${buddhashantiIndividual}
       WHERE age IS NOT NULL ${wardFilter}
       GROUP BY age_group
       ORDER BY age_group
@@ -68,20 +68,20 @@ export const getCasteDistribution = publicProcedure
   .query(async ({ ctx, input }) => {
     const query = ctx.db
       .select({
-        caste: kerabariIndividual.caste,
+        caste: buddhashantiIndividual.caste,
         count: sql<number>`count(*)::int`,
       })
-      .from(kerabariIndividual)
+      .from(buddhashantiIndividual)
       .where(
         input.wardNumber
           ? and(
-              sql`${kerabariIndividual.caste} IS NOT NULL`,
-              eq(kerabariIndividual.wardNo, input.wardNumber)
+              sql`${buddhashantiIndividual.caste} IS NOT NULL`,
+              eq(buddhashantiIndividual.wardNo, input.wardNumber)
             )
-          : sql`${kerabariIndividual.caste} IS NOT NULL`
+          : sql`${buddhashantiIndividual.caste} IS NOT NULL`
       );
 
-    return await query.groupBy(kerabariIndividual.caste);
+    return await query.groupBy(buddhashantiIndividual.caste);
   });
 
 export const getAncestorLanguageDistribution = publicProcedure
@@ -89,20 +89,20 @@ export const getAncestorLanguageDistribution = publicProcedure
   .query(async ({ ctx, input }) => {
     const query = ctx.db
       .select({
-        language: kerabariIndividual.ancestorLanguage,
+        language: buddhashantiIndividual.ancestorLanguage,
         count: sql<number>`count(*)::int`,
       })
-      .from(kerabariIndividual)
+      .from(buddhashantiIndividual)
       .where(
         input.wardNumber
           ? and(
-              sql`${kerabariIndividual.ancestorLanguage} IS NOT NULL`,
-              eq(kerabariIndividual.wardNo, input.wardNumber)
+              sql`${buddhashantiIndividual.ancestorLanguage} IS NOT NULL`,
+              eq(buddhashantiIndividual.wardNo, input.wardNumber)
             )
-          : sql`${kerabariIndividual.ancestorLanguage} IS NOT NULL`
+          : sql`${buddhashantiIndividual.ancestorLanguage} IS NOT NULL`
       );
 
-    return await query.groupBy(kerabariIndividual.ancestorLanguage);
+    return await query.groupBy(buddhashantiIndividual.ancestorLanguage);
   });
 
 export const getMotherTongueDistribution = publicProcedure
@@ -110,20 +110,20 @@ export const getMotherTongueDistribution = publicProcedure
   .query(async ({ ctx, input }) => {
     const query = ctx.db
       .select({
-        language: kerabariIndividual.primaryMotherTongue,
+        language: buddhashantiIndividual.primaryMotherTongue,
         count: sql<number>`count(*)::int`,
       })
-      .from(kerabariIndividual)
+      .from(buddhashantiIndividual)
       .where(
         input.wardNumber
           ? and(
-              sql`${kerabariIndividual.primaryMotherTongue} IS NOT NULL`,
-              eq(kerabariIndividual.wardNo, input.wardNumber)
+              sql`${buddhashantiIndividual.primaryMotherTongue} IS NOT NULL`,
+              eq(buddhashantiIndividual.wardNo, input.wardNumber)
             )
-          : sql`${kerabariIndividual.primaryMotherTongue} IS NOT NULL`
+          : sql`${buddhashantiIndividual.primaryMotherTongue} IS NOT NULL`
       );
 
-    return await query.groupBy(kerabariIndividual.primaryMotherTongue);
+    return await query.groupBy(buddhashantiIndividual.primaryMotherTongue);
   });
 
 export const getReligionDistribution = publicProcedure
@@ -131,20 +131,20 @@ export const getReligionDistribution = publicProcedure
   .query(async ({ ctx, input }) => {
     const query = ctx.db
       .select({
-        religion: kerabariIndividual.religion,
+        religion: buddhashantiIndividual.religion,
         count: sql<number>`count(*)::int`,
       })
-      .from(kerabariIndividual)
+      .from(buddhashantiIndividual)
       .where(
         input.wardNumber
           ? and(
-              sql`${kerabariIndividual.religion} IS NOT NULL`,
-              eq(kerabariIndividual.wardNo, input.wardNumber)
+              sql`${buddhashantiIndividual.religion} IS NOT NULL`,
+              eq(buddhashantiIndividual.wardNo, input.wardNumber)
             )
-          : sql`${kerabariIndividual.religion} IS NOT NULL`
+          : sql`${buddhashantiIndividual.religion} IS NOT NULL`
       );
 
-    return await query.groupBy(kerabariIndividual.religion);
+    return await query.groupBy(buddhashantiIndividual.religion);
   });
 
 export const getMaritalStatusDistribution = publicProcedure
@@ -152,20 +152,20 @@ export const getMaritalStatusDistribution = publicProcedure
   .query(async ({ ctx, input }) => {
     const query = ctx.db
       .select({
-        status: kerabariIndividual.maritalStatus,
+        status: buddhashantiIndividual.maritalStatus,
         count: sql<number>`count(*)::int`,
       })
-      .from(kerabariIndividual)
+      .from(buddhashantiIndividual)
       .where(
         input.wardNumber
           ? and(
-              sql`${kerabariIndividual.maritalStatus} IS NOT NULL`,
-              eq(kerabariIndividual.wardNo, input.wardNumber)
+              sql`${buddhashantiIndividual.maritalStatus} IS NOT NULL`,
+              eq(buddhashantiIndividual.wardNo, input.wardNumber)
             )
-          : sql`${kerabariIndividual.maritalStatus} IS NOT NULL`
+          : sql`${buddhashantiIndividual.maritalStatus} IS NOT NULL`
       );
 
-    return await query.groupBy(kerabariIndividual.maritalStatus);
+    return await query.groupBy(buddhashantiIndividual.maritalStatus);
   });
 
 export const getMarriageAgeDistribution = publicProcedure
@@ -184,7 +184,7 @@ export const getMarriageAgeDistribution = publicProcedure
 
     return await ctx.db.execute(sql`
       SELECT ${sql.raw(ageRanges)} as age_group, COUNT(*)::int as count
-      FROM ${kerabariIndividual}
+      FROM ${buddhashantiIndividual}
       WHERE married_age IS NOT NULL ${wardFilter}
       GROUP BY age_group
       ORDER BY age_group
@@ -196,20 +196,20 @@ export const getDisabilityDistribution = publicProcedure
   .query(async ({ ctx, input }) => {
     const query = ctx.db
       .select({
-        isDisabled: kerabariIndividual.isDisabled,
+        isDisabled: buddhashantiIndividual.isDisabled,
         count: sql<number>`count(*)::int`,
       })
-      .from(kerabariIndividual)
+      .from(buddhashantiIndividual)
       .where(
         input.wardNumber
           ? and(
-              sql`${kerabariIndividual.isDisabled} IS NOT NULL`,
-              eq(kerabariIndividual.wardNo, input.wardNumber)
+              sql`${buddhashantiIndividual.isDisabled} IS NOT NULL`,
+              eq(buddhashantiIndividual.wardNo, input.wardNumber)
             )
-          : sql`${kerabariIndividual.isDisabled} IS NOT NULL`
+          : sql`${buddhashantiIndividual.isDisabled} IS NOT NULL`
       );
 
-    return await query.groupBy(kerabariIndividual.isDisabled);
+    return await query.groupBy(buddhashantiIndividual.isDisabled);
   });
 
 export const getSubmissionStats = publicProcedure
