@@ -425,6 +425,25 @@ export const getAllAreasWithStatus = protectedProcedure
   });
 
 
+export const getAreaCodesByEnumeratorId = protectedProcedure
+  .input(z.object({ enumeratorId: z.string() }))
+  .query(async ({ ctx, input }) => {
+    const assignedAreas = await ctx.db
+      .select({
+        code: areas.code
+      })
+      .from(areas)
+      .where(eq(areas.assignedTo, input.enumeratorId))
+      .orderBy(areas.code);
+
+    // Return "Not Assigned" if no areas are found
+    if (assignedAreas.length === 0) {
+      return ["Not Assigned"];
+    }
+
+    // Return array of area codes
+    return assignedAreas.map(area => area.code);
+  });
 
 
 
