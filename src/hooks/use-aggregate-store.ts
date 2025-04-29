@@ -27,8 +27,21 @@ interface SortingState {
   sortOrder: SortOrder;
 }
 
+interface MapState {
+  center: { lat: number; lng: number };
+  zoom: number;
+  bounds?: {
+    north: number;
+    south: number;
+    east: number;
+    west: number;
+  };
+  selectedMarker?: string | null;
+  clusterExpansion: Set<string>;
+}
+
 interface ViewState {
-  viewMode: "grid" | "table";
+  viewMode: "grid" | "table" | "map";
   expandedBuildings: Set<string>;
   expandedHouseholds: Set<string>;
   expandedBusinesses: Set<string>;
@@ -55,9 +68,23 @@ interface AggregateStore {
   sorting: SortingState;
   setSorting: (sortBy: string, sortOrder?: SortOrder) => void;
 
+  // Map state
+  map: MapState;
+  setMapCenter: (center: { lat: number; lng: number }) => void;
+  setMapZoom: (zoom: number) => void;
+  setMapBounds: (bounds: {
+    north: number;
+    south: number;
+    east: number;
+    west: number;
+  }) => void;
+  setSelectedMarker: (id: string | null) => void;
+  toggleClusterExpansion: (clusterId: string) => void;
+  resetMapState: () => void;
+
   // View state
   view: ViewState;
-  setViewMode: (mode: "grid" | "table") => void;
+  setViewMode: (mode: "grid" | "table" | "map") => void;
   toggleExpandedBuilding: (id: string) => void;
   toggleExpandedHousehold: (id: string) => void;
   toggleExpandedBusiness: (id: string) => void;
@@ -66,6 +93,10 @@ interface AggregateStore {
   setSelectedBusiness: (id: string | null) => void;
   toggleShowMedia: () => void;
 }
+
+// Default map center coordinates (can be set to your municipality's center)
+const DEFAULT_MAP_CENTER = { lat: 27.6588, lng: 85.3247 }; // Kathmandu as default
+const DEFAULT_MAP_ZOOM = 13;
 
 export const useAggregateStore = create<AggregateStore>()(
   persist(
@@ -96,6 +127,47 @@ export const useAggregateStore = create<AggregateStore>()(
       setSorting: (sortBy, sortOrder = "asc") =>
         set({
           sorting: { sortBy, sortOrder },
+        }),
+
+      // Map state
+      map: {
+        center: DEFAULT_MAP_CENTER,
+        zoom: DEFAULT_MAP_ZOOM,
+        clusterExpansion: new Set<string>(),
+      },
+      setMapCenter: (center) =>
+        set((state) => ({
+          map: { ...state.map, center },
+        })),
+      setMapZoom: (zoom) =>
+        set((state) => ({
+          map: { ...state.map, zoom },
+        })),
+      setMapBounds: (bounds) =>
+        set((state) => ({
+          map: { ...state.map, bounds },
+        })),
+      setSelectedMarker: (id) =>
+        set((state) => ({
+          map: { ...state.map, selectedMarker: id },
+        })),
+      toggleClusterExpansion: (clusterId) =>
+        set((state) => {
+          const clusterExpansion = new Set(state.map.clusterExpansion);
+          if (clusterExpansion.has(clusterId)) {
+            clusterExpansion.delete(clusterId);
+          } else {
+            clusterExpansion.add(clusterId);
+          }
+          return { map: { ...state.map, clusterExpansion } };
+        }),
+      resetMapState: () =>
+        set({
+          map: {
+            center: DEFAULT_MAP_CENTER,
+            zoom: DEFAULT_MAP_ZOOM,
+            clusterExpansion: new Set<string>(),
+          },
         }),
 
       // View state
@@ -162,7 +234,7 @@ export const useAggregateStore = create<AggregateStore>()(
     }),
     {
       name: "aggregate-store",
-      // Don't store view state
+      // Only persist certain parts of the state
       partialize: (state) => ({
         filters: state.filters,
         pagination: state.pagination,
@@ -170,6 +242,11 @@ export const useAggregateStore = create<AggregateStore>()(
         view: {
           viewMode: state.view.viewMode,
           showMedia: state.view.showMedia,
+        },
+        // Only store center and zoom from map state
+        map: {
+          center: state.map.center,
+          zoom: state.map.zoom,
         },
       }),
     },

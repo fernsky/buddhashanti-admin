@@ -3,10 +3,13 @@ import * as buildingQueries from "./procedures/building-queries";
 import * as householdQueries from "./procedures/household-queries";
 import * as businessQueries from "./procedures/business-queries";
 import * as mediaQueries from "./procedures/media-queries";
+import * as mapQueries from "./procedures/map-queries";
+import * as filterQueries from "./procedures/filter-queries";
 
 export const aggregateRouter = createTRPCRouter({
   // Building queries
   getAllBuildings: buildingQueries.getAllBuildings,
+  getAllBuildingsInfinite: buildingQueries.getAllBuildingsInfinite, // Add new infinite query
   getBuildingById: buildingQueries.getBuildingById,
   getBuildingsByWard: buildingQueries.getBuildingsByWard,
   getBuildingsByAreaCode: buildingQueries.getBuildingsByAreaCode,
@@ -34,4 +37,17 @@ export const aggregateRouter = createTRPCRouter({
   // Media queries
   getMediaPresignedUrls: mediaQueries.getMediaPresignedUrls,
   getAudioPresignedUrl: mediaQueries.getAudioPresignedUrl,
+
+  // Map queries
+  getMapEntities: mapQueries.getMapEntities,
+  getMapEntityById: mapQueries.getMapEntityById,
+  getClusterPoints: mapQueries.getClusterPoints,
+
+  // Filter queries
+  getDistinctWardNumbers: filterQueries.getDistinctWardNumbers,
+  getDistinctAreaCodes: filterQueries.getDistinctAreaCodes,
+  getDistinctEnumerators: filterQueries.getDistinctEnumerators,
+  getDistinctMapStatuses: filterQueries.getDistinctMapStatuses,
+  getDistinctBuildingOwnerships: filterQueries.getDistinctBuildingOwnerships,
+  getDistinctBuildingBases: filterQueries.getDistinctBuildingBases,
 });

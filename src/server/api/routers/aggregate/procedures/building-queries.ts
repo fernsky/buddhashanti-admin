@@ -367,3 +367,160 @@ export const getBuildingStats = publicProcedure.query(async ({ ctx }) => {
 
   return stats[0];
 });
+
+export const getAllBuildingsInfinite = publicProcedure
+  .input(buildingQuerySchema)
+  .query(async ({ ctx, input }) => {
+    const { limit, offset, sortBy, sortOrder, filters } = input;
+
+    let conditions = sql`TRUE`;
+    if (filters) {
+      const filterConditions = [];
+
+      if (filters.wardId) {
+        filterConditions.push(
+          eq(
+            buddhashantiAggregateBuilding.ward_number,
+            parseInt(filters.wardId),
+          ),
+        );
+      }
+
+      if (filters.areaCode) {
+        filterConditions.push(
+          eq(
+            buddhashantiAggregateBuilding.area_code,
+            parseInt(filters.areaCode),
+          ),
+        );
+      }
+
+      if (filters.enumeratorId) {
+        filterConditions.push(
+          eq(buddhashantiAggregateBuilding.enumerator_id, filters.enumeratorId),
+        );
+      }
+
+      if (filters.mapStatus) {
+        filterConditions.push(
+          eq(buddhashantiAggregateBuilding.map_status, filters.mapStatus),
+        );
+      }
+
+      if (filters.buildingOwnership) {
+        filterConditions.push(
+          eq(
+            buddhashantiAggregateBuilding.building_ownership_status,
+            filters.buildingOwnership,
+          ),
+        );
+      }
+
+      if (filters.buildingBase) {
+        filterConditions.push(
+          eq(buddhashantiAggregateBuilding.building_base, filters.buildingBase),
+        );
+      }
+
+      if (filters.hasHouseholds !== undefined) {
+        if (filters.hasHouseholds) {
+          filterConditions.push(
+            sql`jsonb_array_length(${buddhashantiAggregateBuilding.households}) > 0`,
+          );
+        } else {
+          filterConditions.push(
+            sql`(${buddhashantiAggregateBuilding.households} IS NULL OR jsonb_array_length(${buddhashantiAggregateBuilding.households}) = 0)`,
+          );
+        }
+      }
+
+      if (filters.hasBusinesses !== undefined) {
+        if (filters.hasBusinesses) {
+          filterConditions.push(
+            sql`jsonb_array_length(${buddhashantiAggregateBuilding.businesses}) > 0`,
+          );
+        } else {
+          filterConditions.push(
+            sql`(${buddhashantiAggregateBuilding.businesses} IS NULL OR jsonb_array_length(${buddhashantiAggregateBuilding.businesses}) = 0)`,
+          );
+        }
+      }
+
+      if (filters.fromDate && filters.toDate) {
+        filterConditions.push(
+          sql`${buddhashantiAggregateBuilding.building_survey_date} BETWEEN ${filters.fromDate}::timestamp AND ${filters.toDate}::timestamp`,
+        );
+      }
+
+      if (filters.searchTerm) {
+        filterConditions.push(
+          sql`(
+            ${ilike(buddhashantiAggregateBuilding.locality, `%${filters.searchTerm}%`)} OR
+            ${ilike(buddhashantiAggregateBuilding.building_owner_name, `%${filters.searchTerm}%`)} OR
+            ${ilike(buddhashantiAggregateBuilding.enumerator_name, `%${filters.searchTerm}%`)}
+          )`,
+        );
+      }
+
+      if (filterConditions.length > 0) {
+        const andCondition = and(...filterConditions);
+        if (andCondition) conditions = andCondition;
+      }
+    }
+
+    const validSortColumns = [
+      "id",
+      "building_survey_date",
+      "ward_number",
+      "area_code",
+      "locality",
+      "total_families",
+      "total_businesses",
+      "enumerator_name",
+      "created_at",
+      "building_id",
+      "building_owner_name",
+      "map_status",
+    ];
+    const actualSortBy = validSortColumns.includes(sortBy)
+      ? sortBy
+      : "created_at";
+
+    const [data, totalCount] = await Promise.all([
+      ctx.db
+        .select({
+          id: buddhashantiAggregateBuilding.id,
+          buildingId: buddhashantiAggregateBuilding.building_id,
+          surveyed_at: buddhashantiAggregateBuilding.building_survey_date,
+          wardNumber: buddhashantiAggregateBuilding.ward_number,
+          areaCode: buddhashantiAggregateBuilding.area_code,
+          locality: buddhashantiAggregateBuilding.locality,
+          ownerName: buddhashantiAggregateBuilding.building_owner_name,
+          enumeratorName: buddhashantiAggregateBuilding.enumerator_name,
+          totalFamilies: buddhashantiAggregateBuilding.total_families,
+          totalBusinesses: buddhashantiAggregateBuilding.total_businesses,
+          mapStatus: buddhashantiAggregateBuilding.map_status,
+          created_at: buddhashantiAggregateBuilding.created_at,
+        })
+        .from(buddhashantiAggregateBuilding)
+        .where(conditions)
+        .orderBy(sql`${sql.identifier(actualSortBy)} ${sql.raw(sortOrder)}`)
+        .limit(limit)
+        .offset(offset),
+
+      ctx.db
+        .select({ count: sql<number>`count(*)` })
+        .from(buddhashantiAggregateBuilding)
+        .where(conditions)
+        .then((result) => result[0]?.count || 0),
+    ]);
+
+    return {
+      data,
+      pagination: {
+        total: totalCount,
+        pageSize: limit,
+        offset,
+      },
+    };
+  });
