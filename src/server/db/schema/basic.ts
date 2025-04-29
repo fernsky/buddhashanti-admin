@@ -101,7 +101,7 @@ export const areaStatusEnum = pgEnum("area_status_enum", [
   "asked_for_completion",
   "asked_for_revision_completion",
   "asked_for_withdrawl",
-  "completed"
+  "completed",
 ]);
 
 export const areas = pgTable("areas", {
@@ -117,19 +117,20 @@ export const areas = pgTable("areas", {
 
 export type Area = typeof areas.$inferSelect;
 
-export const areaWithStatus=pgTable("area_status_view",{
-   id: varchar("area_id", { length: 36 }).primaryKey(),
+export const areaWithStatus = pgTable("area_status_view", {
+  id: varchar("area_id", { length: 36 }).primaryKey(),
   code: integer("code").notNull(),
   wardNumber: integer("ward")
     .notNull()
     .references(() => wards.wardNumber),
   assignedTo: varchar("assigned_to", { length: 21 }).references(() => users.id),
   areaStatus: areaStatusEnum("area_status").default("unassigned"),
-  completedBy: varchar("completed_by", { length: 21 }).references(() => users.id),
+  completedBy: varchar("completed_by", { length: 21 }).references(
+    () => users.id,
+  ),
   completed_by_name: varchar("completed_by_name", { length: 255 }),
   assigned_to_name: varchar("assigned_to_name", { length: 255 }),
-})
-
+});
 
 /*
 I need a table that stores the following things:
@@ -181,6 +182,9 @@ export const surveyData = pgTable("odk_survey_data", {
   data: json("data").notNull(),
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").$onUpdate(() => new Date()),
+  // The isParsed field is used to check if the data has been parsed or not.
+  // If it is true, then the data has been parsed and is skipped.
+  isParsed: boolean("is_parsed").default(false),
 });
 
 export const attachmentTypesEnum = pgEnum("attachment", [
@@ -249,15 +253,21 @@ export const stagingToProduction = pgTable(
   }),
 );
 
-export const pointRequests = pgTable('point_requests', {
-  id: text('id').primaryKey().$defaultFn(() => nanoid()),
-  wardNumber: integer('ward_number').notNull(),
-  enumeratorId: text('enumerator_id').notNull().references(() => users.id),
-  coordinates: geometry('coordinates', { type: 'Point' }),
-  message: text('message').notNull(),
-  status: text('status', { enum: ['pending', 'approved', 'rejected'] }).notNull().default('pending'),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+export const pointRequests = pgTable("point_requests", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => nanoid()),
+  wardNumber: integer("ward_number").notNull(),
+  enumeratorId: text("enumerator_id")
+    .notNull()
+    .references(() => users.id),
+  coordinates: geometry("coordinates", { type: "Point" }),
+  message: text("message").notNull(),
+  status: text("status", { enum: ["pending", "approved", "rejected"] })
+    .notNull()
+    .default("pending"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 // Add this type for TypeScript support
@@ -266,4 +276,3 @@ export type NewPointRequest = typeof pointRequests.$inferInsert;
 function nanoid(): string | import("drizzle-orm").SQL<unknown> {
   throw new Error("Function not implemented.");
 }
-
