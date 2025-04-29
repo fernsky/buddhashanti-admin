@@ -119,9 +119,9 @@ export function AggregateFiltersPanel() {
                       Ward
                     </Label>
                     <Select
-                      value={filters.wardId ?? ""}
+                      value={filters.wardId ?? "all"}
                       onValueChange={(value) =>
-                        setFilter("wardId", value || undefined)
+                        setFilter("wardId", value === "all" ? undefined : value)
                       }
                     >
                       <SelectTrigger id="ward-filter" className="pl-9">
@@ -132,12 +132,12 @@ export function AggregateFiltersPanel() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
-                          <SelectItem value="">All Wards</SelectItem>
-                          {wards?.map((ward) => (
+                          {/* <SelectItem value="all">All Wards</SelectItem> */}
+                          {/* {wards?.map((ward) => (
                             <SelectItem key={ward.id} value={ward.id}>
                               Ward {ward.wardNumber}
                             </SelectItem>
-                          ))}
+                          ))} */}
                         </SelectGroup>
                       </SelectContent>
                     </Select>
@@ -147,21 +147,24 @@ export function AggregateFiltersPanel() {
                   <div className="space-y-1.5">
                     <Label htmlFor="area-code-filter">Area Code</Label>
                     <Select
-                      value={filters.areaCode ?? ""}
+                      value={filters.areaCode ?? "all"}
                       onValueChange={(value) =>
-                        setFilter("areaCode", value || undefined)
+                        setFilter(
+                          "areaCode",
+                          value === "all" ? undefined : value,
+                        )
                       }
                     >
                       <SelectTrigger id="area-code-filter">
                         <SelectValue placeholder="All Area Codes" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">All Area Codes</SelectItem>
-                        {areaCodes?.map((area) => (
+                        {/* <SelectItem value="all">All Area Codes</SelectItem> */}
+                        {/* {areaCodes?.map((area) => (
                           <SelectItem key={area.id} value={area.id}>
                             {area.areaCode}
                           </SelectItem>
-                        ))}
+                        ))} */}
                       </SelectContent>
                     </Select>
                   </div>
@@ -170,21 +173,24 @@ export function AggregateFiltersPanel() {
                   <div className="space-y-1.5">
                     <Label htmlFor="enumerator-filter">Enumerator</Label>
                     <Select
-                      value={filters.enumeratorId ?? ""}
+                      value={filters.enumeratorId ?? "all"}
                       onValueChange={(value) =>
-                        setFilter("enumeratorId", value || undefined)
+                        setFilter(
+                          "enumeratorId",
+                          value === "all" ? undefined : value,
+                        )
                       }
                     >
                       <SelectTrigger id="enumerator-filter">
                         <SelectValue placeholder="All Enumerators" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">All Enumerators</SelectItem>
-                        {enumerators?.map((enumerator) => (
+                        {/* <SelectItem value="all">All Enumerators</SelectItem> */}
+                        {/* {enumerators?.map((enumerator) => (
                           <SelectItem key={enumerator.id} value={enumerator.id}>
                             {enumerator.name}
                           </SelectItem>
-                        ))}
+                        ))} */}
                       </SelectContent>
                     </Select>
                   </div>
@@ -193,22 +199,25 @@ export function AggregateFiltersPanel() {
                   <div className="space-y-1.5">
                     <Label htmlFor="map-status-filter">Map Status</Label>
                     <Select
-                      value={filters.mapStatus ?? ""}
+                      value={filters.mapStatus ?? "all"}
                       onValueChange={(value) =>
-                        setFilter("mapStatus", value || undefined)
+                        setFilter(
+                          "mapStatus",
+                          value === "all" ? undefined : value,
+                        )
                       }
                     >
                       <SelectTrigger id="map-status-filter">
                         <SelectValue placeholder="All Statuses" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">All Statuses</SelectItem>
-                        {mapStatuses?.map((status) => (
+                        {/* <SelectItem value="all">All Statuses</SelectItem> */}
+                        {/* {mapStatuses?.map((status) => (
                           <SelectItem key={status.id} value={status.id}>
                             {status.name.charAt(0).toUpperCase() +
                               status.name.slice(1).replace(/_/g, " ")}
                           </SelectItem>
-                        ))}
+                        ))} */}
                       </SelectContent>
                     </Select>
                   </div>
@@ -219,22 +228,25 @@ export function AggregateFiltersPanel() {
                       Building Ownership
                     </Label>
                     <Select
-                      value={filters.buildingOwnership ?? ""}
+                      value={filters.buildingOwnership ?? "all"}
                       onValueChange={(value) =>
-                        setFilter("buildingOwnership", value || undefined)
+                        setFilter(
+                          "buildingOwnership",
+                          value === "all" ? undefined : value,
+                        )
                       }
                     >
                       <SelectTrigger id="building-ownership-filter">
                         <SelectValue placeholder="All Types" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">All Types</SelectItem>
-                        {buildingOwnerships?.map((ownership) => (
+                        {/* <SelectItem value="all">All Types</SelectItem> */}
+                        {/* {buildingOwnerships?.map((ownership) => (
                           <SelectItem key={ownership.id} value={ownership.id}>
                             {ownership.name.charAt(0).toUpperCase() +
                               ownership.name.slice(1)}
                           </SelectItem>
-                        ))}
+                        ))} */}
                       </SelectContent>
                     </Select>
                   </div>
@@ -243,16 +255,19 @@ export function AggregateFiltersPanel() {
                   <div className="space-y-1.5">
                     <Label htmlFor="building-base-filter">Building Base</Label>
                     <Select
-                      value={filters.buildingBase ?? ""}
+                      value={filters.buildingBase ?? "all"}
                       onValueChange={(value) =>
-                        setFilter("buildingBase", value || undefined)
+                        setFilter(
+                          "buildingBase",
+                          value === "all" ? undefined : value,
+                        )
                       }
                     >
                       <SelectTrigger id="building-base-filter">
                         <SelectValue placeholder="All Bases" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">All Bases</SelectItem>
+                        {/* <SelectItem value="all">All Bases</SelectItem> */}
                         {buildingBases?.map((base) => (
                           <SelectItem key={base.id} value={base.id}>
                             {base.name.charAt(0).toUpperCase() +

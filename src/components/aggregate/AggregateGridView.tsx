@@ -11,6 +11,8 @@ import {
   User,
   ChevronRight,
   Loader2,
+  ChevronLeftIcon,
+  ChevronRightIcon,
 } from "lucide-react";
 import {
   Card,
@@ -23,7 +25,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDate } from "@/lib/utils";
-import { InfiniteLoader } from "../ui/infinite-loader";
 import { BuddhashantiAggregateBuilding } from "@/server/db/schema/aggregate-building";
 
 export function AggregateGridView() {
@@ -38,7 +39,7 @@ export function AggregateGridView() {
 
   const isDesktop = useMediaQuery("(min-width: 768px)");
 
-  // Use useQuery instead of useInfiniteQuery since that's what's available
+  // Standard query for paginated data
   const { data: buildingsData, isLoading } =
     api.aggregate.getAllBuildingsInfinite.useQuery(
       {
@@ -53,28 +54,49 @@ export function AggregateGridView() {
       },
     );
 
-  // Track if we can load more
-  const hasMore = buildingsData
-    ? buildingsData.pagination.total >
-      buildingsData.pagination.offset + buildingsData.pagination.pageSize
-    : false;
-
-  // Loading state for next page
-  const [loadingMore, setLoadingMore] = React.useState(false);
-
-  // Function to load more
-  const handleLoadMore = async () => {
-    if (!hasMore || loadingMore) return;
-
-    setLoadingMore(true);
-    setPagination({
-      offset: pagination.offset + pagination.limit,
-    });
-    setLoadingMore(false);
-  };
-
   // Make sure we have the data
   const buildings = buildingsData?.data ?? [];
+  const totalItems = buildingsData?.pagination?.total || 0;
+  const totalPages = Math.ceil((totalItems || 0) / pagination.limit);
+  const currentPage = Math.floor(pagination.offset / pagination.limit) + 1;
+
+  // Handle pagination
+  const handlePageChange = (page: number) => {
+    setPagination({
+      offset: (page - 1) * pagination.limit,
+    });
+  };
+
+  // Generate pagination range
+  const getPaginationRange = () => {
+    const delta = 2; // Number of pages to show before and after current page
+    const range = [];
+    const rangeWithDots = [];
+
+    for (
+      let i = Math.max(2, currentPage - delta);
+      i <= Math.min(totalPages - 1, currentPage + delta);
+      i++
+    ) {
+      range.push(i);
+    }
+
+    if (currentPage - delta > 2) {
+      rangeWithDots.push(1, "...");
+    } else {
+      rangeWithDots.push(1);
+    }
+
+    rangeWithDots.push(...range);
+
+    if (currentPage + delta < totalPages - 1) {
+      rangeWithDots.push("...", totalPages);
+    } else if (totalPages > 1) {
+      rangeWithDots.push(totalPages);
+    }
+
+    return rangeWithDots;
+  };
 
   // Define the number of columns based on screen size
   const cols = isDesktop
@@ -114,23 +136,69 @@ export function AggregateGridView() {
           </Button>
         </Card>
       ) : (
-        <div className={`grid ${cols} gap-4`}>
-          {buildings.map((building) => (
-            <BuildingCard
-              key={building.id}
-              building={building}
-              onClick={() => setSelectedBuilding(building.id)}
-              isSelected={view.selectedBuildingId === building.id}
-            />
-          ))}
-        </div>
-      )}
+        <>
+          <div className={`grid ${cols} gap-4`}>
+            {buildings.map((building) => (
+              <BuildingCard
+                key={building.id}
+                building={building}
+                onClick={() => setSelectedBuilding(building.id)}
+                isSelected={view.selectedBuildingId === building.id}
+              />
+            ))}
+          </div>
 
-      <InfiniteLoader
-        hasMore={!!hasMore}
-        isLoading={loadingMore}
-        onLoadMore={handleLoadMore}
-      />
+          {/* Pagination Controls */}
+          {totalPages > 0 && (
+            <Card className="mt-4 p-4">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-muted-foreground">
+                  Showing {pagination.offset + 1}-
+                  {Math.min(pagination.offset + pagination.limit, totalItems)}{" "}
+                  of {totalItems} buildings
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeftIcon className="h-4 w-4 mr-1" />
+                    Previous
+                  </Button>
+                  {getPaginationRange().map((page, index) => (
+                    <React.Fragment key={index}>
+                      {page === "..." ? (
+                        <span className="px-2 text-muted-foreground">...</span>
+                      ) : (
+                        <Button
+                          variant={currentPage === page ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => handlePageChange(page as number)}
+                          disabled={currentPage === page}
+                          className="w-9 p-0"
+                        >
+                          {page}
+                        </Button>
+                      )}
+                    </React.Fragment>
+                  ))}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage >= totalPages}
+                  >
+                    Next
+                    <ChevronRightIcon className="h-4 w-4 ml-1" />
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          )}
+        </>
+      )}
     </div>
   );
 }

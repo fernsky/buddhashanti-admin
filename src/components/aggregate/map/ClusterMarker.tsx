@@ -43,7 +43,7 @@ type ClusterMarkerProps = {
 
 export function ClusterMarker({ cluster, onClick }: ClusterMarkerProps) {
   const { map, toggleClusterExpansion } = useAggregateStore();
-  const isExpanded = map.clusterExpansion.has(cluster.id);
+  const isExpanded = map?.clusterExpansion?.has(cluster.id) || false;
 
   const handleClick = () => {
     toggleClusterExpansion(cluster.id);
