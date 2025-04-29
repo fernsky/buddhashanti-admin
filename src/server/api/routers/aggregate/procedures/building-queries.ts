@@ -1,0 +1,369 @@
+import { publicProcedure } from "@/server/api/trpc";
+import {
+  buildingQuerySchema,
+  buildingByIdSchema,
+  buildingsByWardSchema,
+  buildingsByAreaCodeSchema,
+  buildingsByEnumeratorSchema,
+} from "../schemas/building-schema";
+import { TRPCError } from "@trpc/server";
+import { and, eq, ilike, sql } from "drizzle-orm";
+import { buddhashantiAggregateBuilding } from "@/server/db/schema/aggregate-building";
+import { env } from "@/env";
+import { surveyAttachments } from "@/server/db/schema";
+import { generateMediaUrls } from "../utils/media-utils";
+
+export const getAllBuildings = publicProcedure
+  .input(buildingQuerySchema)
+  .query(async ({ ctx, input }) => {
+    const { limit, offset, sortBy, sortOrder, filters } = input;
+
+    let conditions = sql`TRUE`;
+    if (filters) {
+      const filterConditions = [];
+
+      if (filters.wardId) {
+        filterConditions.push(
+          eq(
+            buddhashantiAggregateBuilding.ward_number,
+            parseInt(filters.wardId),
+          ),
+        );
+      }
+
+      if (filters.areaCode) {
+        filterConditions.push(
+          eq(
+            buddhashantiAggregateBuilding.area_code,
+            parseInt(filters.areaCode),
+          ),
+        );
+      }
+
+      if (filters.enumeratorId) {
+        filterConditions.push(
+          eq(buddhashantiAggregateBuilding.enumerator_id, filters.enumeratorId),
+        );
+      }
+
+      if (filters.mapStatus) {
+        filterConditions.push(
+          eq(buddhashantiAggregateBuilding.map_status, filters.mapStatus),
+        );
+      }
+
+      if (filters.buildingOwnership) {
+        filterConditions.push(
+          eq(
+            buddhashantiAggregateBuilding.building_ownership_status,
+            filters.buildingOwnership,
+          ),
+        );
+      }
+
+      if (filters.buildingBase) {
+        filterConditions.push(
+          eq(buddhashantiAggregateBuilding.building_base, filters.buildingBase),
+        );
+      }
+
+      if (filters.hasHouseholds !== undefined) {
+        if (filters.hasHouseholds) {
+          filterConditions.push(
+            sql`jsonb_array_length(${buddhashantiAggregateBuilding.households}) > 0`,
+          );
+        } else {
+          filterConditions.push(
+            sql`(${buddhashantiAggregateBuilding.households} IS NULL OR jsonb_array_length(${buddhashantiAggregateBuilding.households}) = 0)`,
+          );
+        }
+      }
+
+      if (filters.hasBusinesses !== undefined) {
+        if (filters.hasBusinesses) {
+          filterConditions.push(
+            sql`jsonb_array_length(${buddhashantiAggregateBuilding.businesses}) > 0`,
+          );
+        } else {
+          filterConditions.push(
+            sql`(${buddhashantiAggregateBuilding.businesses} IS NULL OR jsonb_array_length(${buddhashantiAggregateBuilding.businesses}) = 0)`,
+          );
+        }
+      }
+
+      if (filters.fromDate && filters.toDate) {
+        filterConditions.push(
+          sql`${buddhashantiAggregateBuilding.building_survey_date} BETWEEN ${filters.fromDate}::timestamp AND ${filters.toDate}::timestamp`,
+        );
+      }
+
+      if (filters.searchTerm) {
+        filterConditions.push(
+          sql`(
+            ${ilike(buddhashantiAggregateBuilding.locality, `%${filters.searchTerm}%`)} OR
+            ${ilike(buddhashantiAggregateBuilding.building_owner_name, `%${filters.searchTerm}%`)} OR
+            ${ilike(buddhashantiAggregateBuilding.enumerator_name, `%${filters.searchTerm}%`)}
+          )`,
+        );
+      }
+
+      if (filterConditions.length > 0) {
+        const andCondition = and(...filterConditions);
+        if (andCondition) conditions = andCondition;
+      }
+    }
+
+    const validSortColumns = [
+      "id",
+      "building_survey_date",
+      "ward_number",
+      "area_code",
+      "locality",
+      "total_families",
+      "total_businesses",
+      "enumerator_name",
+      "created_at",
+    ];
+    const actualSortBy = validSortColumns.includes(sortBy)
+      ? sortBy
+      : "created_at";
+
+    const [data, totalCount] = await Promise.all([
+      ctx.db
+        .select({
+          id: buddhashantiAggregateBuilding.id,
+          buildingId: buddhashantiAggregateBuilding.building_id,
+          surveyed_at: buddhashantiAggregateBuilding.building_survey_date,
+          wardNumber: buddhashantiAggregateBuilding.ward_number,
+          areaCode: buddhashantiAggregateBuilding.area_code,
+          locality: buddhashantiAggregateBuilding.locality,
+          ownerName: buddhashantiAggregateBuilding.building_owner_name,
+          enumeratorName: buddhashantiAggregateBuilding.enumerator_name,
+          totalFamilies: buddhashantiAggregateBuilding.total_families,
+          totalBusinesses: buddhashantiAggregateBuilding.total_businesses,
+          mapStatus: buddhashantiAggregateBuilding.map_status,
+          created_at: buddhashantiAggregateBuilding.created_at,
+        })
+        .from(buddhashantiAggregateBuilding)
+        .where(conditions)
+        .orderBy(sql`${sql.identifier(actualSortBy)} ${sql.raw(sortOrder)}`)
+        .limit(limit)
+        .offset(offset),
+
+      ctx.db
+        .select({ count: sql<number>`count(*)` })
+        .from(buddhashantiAggregateBuilding)
+        .where(conditions)
+        .then((result) => result[0]?.count || 0),
+    ]);
+
+    return {
+      data,
+      pagination: {
+        total: totalCount,
+        pageSize: limit,
+        offset,
+      },
+    };
+  });
+
+export const getBuildingById = publicProcedure
+  .input(buildingByIdSchema)
+  .query(async ({ ctx, input }) => {
+    const building = await ctx.db
+      .select()
+      .from(buddhashantiAggregateBuilding)
+      .where(eq(buddhashantiAggregateBuilding.id, input.id))
+      .limit(1);
+
+    if (!building[0]) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Building not found",
+      });
+    }
+
+    const buildingData = building[0];
+
+    // Get attachments
+    const attachments = await ctx.db.query.surveyAttachments.findMany({
+      where: eq(surveyAttachments.dataId, input.id),
+    });
+
+    // Generate media URLs
+    const buildingWithMedia = await generateMediaUrls(
+      ctx.minio,
+      buildingData,
+      attachments,
+    );
+
+    // Conditionally include or exclude households/businesses
+    if (!input.includeHouseholds) {
+      buildingWithMedia.households = null;
+    }
+
+    if (!input.includeBusinesses) {
+      buildingWithMedia.businesses = null;
+    }
+
+    return buildingWithMedia;
+  });
+
+export const getBuildingsByWard = publicProcedure
+  .input(buildingsByWardSchema)
+  .query(async ({ ctx, input }) => {
+    const { wardId, limit, offset } = input;
+
+    const [data, totalCount] = await Promise.all([
+      ctx.db
+        .select({
+          id: buddhashantiAggregateBuilding.id,
+          locality: buddhashantiAggregateBuilding.locality,
+          areaCode: buddhashantiAggregateBuilding.area_code,
+          ownerName: buddhashantiAggregateBuilding.building_owner_name,
+          totalFamilies: buddhashantiAggregateBuilding.total_families,
+          totalBusinesses: buddhashantiAggregateBuilding.total_businesses,
+          lat: buddhashantiAggregateBuilding.building_gps_latitude,
+          lng: buddhashantiAggregateBuilding.building_gps_longitude,
+        })
+        .from(buddhashantiAggregateBuilding)
+        .where(eq(buddhashantiAggregateBuilding.ward_number, parseInt(wardId)))
+        .orderBy(buddhashantiAggregateBuilding.area_code)
+        .limit(limit)
+        .offset(offset),
+
+      ctx.db
+        .select({ count: sql<number>`count(*)` })
+        .from(buddhashantiAggregateBuilding)
+        .where(eq(buddhashantiAggregateBuilding.ward_number, parseInt(wardId)))
+        .then((result) => result[0]?.count || 0),
+    ]);
+
+    return {
+      data,
+      pagination: {
+        total: totalCount,
+        pageSize: limit,
+        offset,
+      },
+    };
+  });
+
+export const getBuildingsByAreaCode = publicProcedure
+  .input(buildingsByAreaCodeSchema)
+  .query(async ({ ctx, input }) => {
+    const { areaCode, limit, offset } = input;
+
+    const [data, totalCount] = await Promise.all([
+      ctx.db
+        .select({
+          id: buddhashantiAggregateBuilding.id,
+          locality: buddhashantiAggregateBuilding.locality,
+          wardNumber: buddhashantiAggregateBuilding.ward_number,
+          ownerName: buddhashantiAggregateBuilding.building_owner_name,
+          lat: buddhashantiAggregateBuilding.building_gps_latitude,
+          lng: buddhashantiAggregateBuilding.building_gps_longitude,
+          gpsAccuracy: buddhashantiAggregateBuilding.building_gps_accuracy,
+          totalFamilies: buddhashantiAggregateBuilding.total_families,
+          totalBusinesses: buddhashantiAggregateBuilding.total_businesses,
+        })
+        .from(buddhashantiAggregateBuilding)
+        .where(eq(buddhashantiAggregateBuilding.area_code, parseInt(areaCode)))
+        .limit(limit)
+        .offset(offset),
+
+      ctx.db
+        .select({ count: sql<number>`count(*)` })
+        .from(buddhashantiAggregateBuilding)
+        .where(eq(buddhashantiAggregateBuilding.area_code, parseInt(areaCode)))
+        .then((result) => result[0]?.count || 0),
+    ]);
+
+    return {
+      data: data.map((building) => ({
+        id: building.id,
+        type: "aggregate_building",
+        locality: building.locality,
+        wardNumber: building.wardNumber?.toString(),
+        ownerName: building.ownerName,
+        totalFamilies: building.totalFamilies,
+        totalBusinesses: building.totalBusinesses,
+        gpsPoint:
+          building.lat && building.lng
+            ? {
+                lat: Number(building.lat),
+                lng: Number(building.lng),
+                accuracy: Number(building.gpsAccuracy) || 0,
+              }
+            : null,
+      })),
+      pagination: {
+        total: totalCount,
+        pageSize: limit,
+        offset,
+      },
+    };
+  });
+
+export const getBuildingsByEnumerator = publicProcedure
+  .input(buildingsByEnumeratorSchema)
+  .query(async ({ ctx, input }) => {
+    const { enumeratorId, enumeratorName, limit, offset } = input;
+
+    let condition = sql`TRUE`;
+    if (enumeratorId) {
+      condition = eq(buddhashantiAggregateBuilding.enumerator_id, enumeratorId);
+    } else if (enumeratorName) {
+      condition = ilike(
+        buddhashantiAggregateBuilding.enumerator_name,
+        `%${enumeratorName}%`,
+      );
+    }
+
+    const [data, totalCount] = await Promise.all([
+      ctx.db
+        .select({
+          id: buddhashantiAggregateBuilding.id,
+          wardNumber: buddhashantiAggregateBuilding.ward_number,
+          areaCode: buddhashantiAggregateBuilding.area_code,
+          locality: buddhashantiAggregateBuilding.locality,
+          ownerName: buddhashantiAggregateBuilding.building_owner_name,
+          surveyDate: buddhashantiAggregateBuilding.building_survey_date,
+          totalFamilies: buddhashantiAggregateBuilding.total_families,
+          totalBusinesses: buddhashantiAggregateBuilding.total_businesses,
+        })
+        .from(buddhashantiAggregateBuilding)
+        .where(condition)
+        .orderBy(buddhashantiAggregateBuilding.building_survey_date)
+        .limit(limit)
+        .offset(offset),
+
+      ctx.db
+        .select({ count: sql<number>`count(*)` })
+        .from(buddhashantiAggregateBuilding)
+        .where(condition)
+        .then((result) => result[0]?.count || 0),
+    ]);
+
+    return {
+      data,
+      pagination: {
+        total: totalCount,
+        pageSize: limit,
+        offset,
+      },
+    };
+  });
+
+export const getBuildingStats = publicProcedure.query(async ({ ctx }) => {
+  const stats = await ctx.db
+    .select({
+      totalBuildings: sql<number>`count(*)`,
+      totalHouseholds: sql<number>`sum(case when jsonb_array_length(${buddhashantiAggregateBuilding.households}) > 0 then ${buddhashantiAggregateBuilding.total_families} else 0 end)`,
+      totalBusinesses: sql<number>`sum(case when jsonb_array_length(${buddhashantiAggregateBuilding.businesses}) > 0 then ${buddhashantiAggregateBuilding.total_businesses} else 0 end)`,
+      avgFamiliesPerBuilding: sql<number>`avg(${buddhashantiAggregateBuilding.total_families})`,
+    })
+    .from(buddhashantiAggregateBuilding);
+
+  return stats[0];
+});
