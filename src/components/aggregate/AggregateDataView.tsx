@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect } from "react";
 import { useAggregateStore } from "@/hooks/use-aggregate-store";
-import { AggregateTableView } from "./AggregateTableView";
+import { AggregateTableView } from "./table/AggregateTableView";
 import { AggregateGridView } from "./AggregateGridView";
 import { AggregateMapView } from "./map/AggregateMapView";
 import { AggregateViewSwitch } from "./AggregateViewSwitch";

@@ -524,3 +524,195 @@ export const getAllBuildingsInfinite = publicProcedure
       },
     };
   });
+
+export const getAggregatedBuildingData = publicProcedure
+  .input(buildingQuerySchema)
+  .query(async ({ ctx, input }) => {
+    const { limit, offset, sortBy, sortOrder, filters } = input;
+
+    // Apply the same filtering logic as in getAllBuildingsInfinite
+    let conditions = sql`TRUE`;
+    if (filters) {
+      const filterConditions = [];
+
+      if (filters.wardId) {
+        filterConditions.push(
+          eq(
+            buddhashantiAggregateBuilding.ward_number,
+            parseInt(filters.wardId),
+          ),
+        );
+      }
+
+      if (filters.areaCode) {
+        filterConditions.push(
+          eq(
+            buddhashantiAggregateBuilding.area_code,
+            parseInt(filters.areaCode),
+          ),
+        );
+      }
+
+      if (filters.enumeratorId) {
+        filterConditions.push(
+          eq(buddhashantiAggregateBuilding.enumerator_id, filters.enumeratorId),
+        );
+      }
+
+      if (filters.mapStatus) {
+        filterConditions.push(
+          eq(buddhashantiAggregateBuilding.map_status, filters.mapStatus),
+        );
+      }
+
+      if (filters.buildingOwnership) {
+        filterConditions.push(
+          eq(
+            buddhashantiAggregateBuilding.building_ownership_status,
+            filters.buildingOwnership,
+          ),
+        );
+      }
+
+      if (filters.buildingBase) {
+        filterConditions.push(
+          eq(buddhashantiAggregateBuilding.building_base, filters.buildingBase),
+        );
+      }
+
+      if (filters.hasHouseholds !== undefined) {
+        if (filters.hasHouseholds) {
+          filterConditions.push(
+            sql`jsonb_array_length(${buddhashantiAggregateBuilding.households}) > 0`,
+          );
+        } else {
+          filterConditions.push(
+            sql`(${buddhashantiAggregateBuilding.households} IS NULL OR jsonb_array_length(${buddhashantiAggregateBuilding.households}) = 0)`,
+          );
+        }
+      }
+
+      if (filters.hasBusinesses !== undefined) {
+        if (filters.hasBusinesses) {
+          filterConditions.push(
+            sql`jsonb_array_length(${buddhashantiAggregateBuilding.businesses}) > 0`,
+          );
+        } else {
+          filterConditions.push(
+            sql`(${buddhashantiAggregateBuilding.businesses} IS NULL OR jsonb_array_length(${buddhashantiAggregateBuilding.businesses}) = 0)`,
+          );
+        }
+      }
+
+      if (filters.fromDate && filters.toDate) {
+        filterConditions.push(
+          sql`${buddhashantiAggregateBuilding.building_survey_date} BETWEEN ${filters.fromDate}::timestamp AND ${filters.toDate}::timestamp`,
+        );
+      }
+
+      if (filters.searchTerm) {
+        filterConditions.push(
+          sql`(
+            ${ilike(buddhashantiAggregateBuilding.locality, `%${filters.searchTerm}%`)} OR
+            ${ilike(buddhashantiAggregateBuilding.building_owner_name, `%${filters.searchTerm}%`)} OR
+            ${ilike(buddhashantiAggregateBuilding.enumerator_name, `%${filters.searchTerm}%`)}
+          )`,
+        );
+      }
+
+      if (filterConditions.length > 0) {
+        const andCondition = and(...filterConditions);
+        if (andCondition) conditions = andCondition;
+      }
+    }
+
+    // Query the buildings with all their nested data
+    const buildingsWithNestedData = await ctx.db
+      .select()
+      .from(buddhashantiAggregateBuilding)
+      .where(conditions)
+      .orderBy(sql`${sql.identifier(sortBy)} ${sql.raw(sortOrder)}`)
+      .limit(limit)
+      .offset(offset);
+
+    // Get the total count for pagination
+    const totalCount = await ctx.db
+      .select({ count: sql<number>`count(*)` })
+      .from(buddhashantiAggregateBuilding)
+      .where(conditions)
+      .then((result) => result[0]?.count || 0);
+
+    // Process the data to generate media URLs and flatten the structure
+    const processedData = await Promise.all(
+      buildingsWithNestedData.map(async (building) => {
+        // Get attachments for this building
+        const buildingAttachments =
+          await ctx.db.query.surveyAttachments.findMany({
+            where: eq(surveyAttachments.dataId, building.id),
+          });
+
+        // Generate media URLs for the building
+        const buildingWithMedia = await generateMediaUrls(
+          ctx.minio,
+          building,
+          buildingAttachments,
+        );
+
+        // Process households if they exist
+        const households = await Promise.all(
+          (building.households || []).map(async (household) => {
+            // Get attachments for this household
+            const householdAttachments =
+              await ctx.db.query.surveyAttachments.findMany({
+                where: eq(surveyAttachments.dataId, household.id),
+              });
+
+            // Generate media URLs for the household
+            const householdWithMedia = await generateMediaUrls(
+              ctx.minio,
+              household,
+              householdAttachments,
+            );
+
+            return householdWithMedia;
+          }),
+        );
+
+        // Process businesses if they exist
+        const businesses = await Promise.all(
+          (building.businesses || []).map(async (business) => {
+            // Get attachments for this business
+            const businessAttachments =
+              await ctx.db.query.surveyAttachments.findMany({
+                where: eq(surveyAttachments.dataId, business.id),
+              });
+
+            // Generate media URLs for the business
+            const businessWithMedia = await generateMediaUrls(
+              ctx.minio,
+              business,
+              businessAttachments,
+            );
+
+            return businessWithMedia;
+          }),
+        );
+
+        // Return the complete data structure
+        return {
+          ...buildingWithMedia,
+          households: households,
+          businesses: businesses,
+        };
+      }),
+    );
+
+    return {
+      data: processedData,
+      pagination: {
+        total: totalCount,
+        pageSize: limit,
+        offset,
+      },
+    };
+  });

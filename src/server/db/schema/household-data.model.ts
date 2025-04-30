@@ -120,7 +120,6 @@ export interface HouseholdData {
   animals?: AnimalData[];
   animal_products?: AnimalProductData[];
   deaths?: DeathData[];
-  absentees?: AbsenteeData[];
 
   // Metadata
   created_at?: string;
@@ -187,6 +186,18 @@ interface HouseholdMemberData {
   primary_occupation?: string | null;
   work_barrier?: string | null;
   work_availability?: string | null;
+
+  // Absentee
+  ward_number: number;
+  absentee_name: string;
+  education_level: string;
+  absence_reason: string;
+  location: string;
+  province?: string | null;
+  district?: string | null;
+  country?: string | null;
+  sends_remittance: boolean;
+  remittance_amount?: number | null;
 }
 
 /**
@@ -257,24 +268,4 @@ interface DeathData {
   deceased_age: number;
   deceased_death_cause: string;
   deceased_fertility_death_condition?: string | null;
-}
-
-/**
- * Absentee data embedded within HouseholdData
- */
-interface AbsenteeData {
-  id: string;
-  household_id: string;
-  ward_number: number;
-  absentee_name: string;
-  gender: string;
-  age: number;
-  education_level: string;
-  absence_reason: string;
-  location: string;
-  province?: string | null;
-  district?: string | null;
-  country?: string | null;
-  sends_remittance: boolean;
-  remittance_amount?: number | null;
 }

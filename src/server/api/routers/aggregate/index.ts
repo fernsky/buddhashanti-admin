@@ -9,12 +9,13 @@ import * as filterQueries from "./procedures/filter-queries";
 export const aggregateRouter = createTRPCRouter({
   // Building queries
   getAllBuildings: buildingQueries.getAllBuildings,
-  getAllBuildingsInfinite: buildingQueries.getAllBuildingsInfinite, // Add new infinite query
+  getAllBuildingsInfinite: buildingQueries.getAllBuildingsInfinite,
   getBuildingById: buildingQueries.getBuildingById,
   getBuildingsByWard: buildingQueries.getBuildingsByWard,
   getBuildingsByAreaCode: buildingQueries.getBuildingsByAreaCode,
   getBuildingsByEnumerator: buildingQueries.getBuildingsByEnumerator,
   getBuildingStats: buildingQueries.getBuildingStats,
+  getAggregatedBuildingData: buildingQueries.getAggregatedBuildingData,
 
   // Household queries
   getHouseholdById: householdQueries.getHouseholdById,
