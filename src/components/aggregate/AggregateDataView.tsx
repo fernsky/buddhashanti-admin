@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/card";
 import { api } from "@/trpc/react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Building, Home, Store, BarChart4, Info } from "lucide-react";
+import { localizeNumber } from "@/lib/utils/localize-number";
 
 export function AggregateDataView() {
   const { view, pagination, filters, sorting, setPagination } =
@@ -25,20 +26,17 @@ export function AggregateDataView() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Aggregate Data</h2>
-          <p className="text-muted-foreground">
-            {buildingStats ? (
-              <>
-                Showing data from {buildingStats.totalBuildings} buildings with{" "}
-                {buildingStats.totalHouseholds} households and{" "}
-                {buildingStats.totalBusinesses} businesses
-              </>
-            ) : (
-              "Loading building statistics..."
-            )}
-          </p>
+      <div className="flex justify-between items-center mb-4">
+        <div className="text-muted-foreground">
+          {buildingStats ? (
+            <>
+              {localizeNumber(buildingStats.totalBuildings, "ne")} भवनहरू,{" "}
+              {localizeNumber(buildingStats.totalHouseholds, "ne")} परिवारहरू र{" "}
+              {localizeNumber(buildingStats.totalBusinesses, "ne")} व्यवसायहरू
+            </>
+          ) : (
+            "डाटा लोड हुँदैछ..."
+          )}
         </div>
         <AggregateViewSwitch />
       </div>
@@ -53,15 +51,15 @@ export function AggregateDataView() {
             ) : (
               <Building className="h-4 w-4" />
             )}
-            <span>Data</span>
+            <span>डाटा</span>
           </TabsTrigger>
           <TabsTrigger value="analytics" className="flex gap-2 items-center">
             <BarChart4 className="h-4 w-4" />
-            <span>Analytics</span>
+            <span>विश्लेषण</span>
           </TabsTrigger>
           <TabsTrigger value="about" className="flex gap-2 items-center">
             <Info className="h-4 w-4" />
-            <span>About</span>
+            <span>बारेमा</span>
           </TabsTrigger>
         </TabsList>
 
@@ -82,12 +80,12 @@ export function AggregateDataView() {
             <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
               <BarChart4 className="h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-xl font-medium mb-2">
-                Analytics Coming Soon
+                विश्लेषण चाँडै आउँदैछ
               </h3>
               <p className="text-muted-foreground max-w-md">
-                The analytics dashboard for aggregate data is currently under
-                development. Here you'll soon be able to view charts, trends and
-                statistics derived from your survey data.
+                समग्र डाटाको विश्लेषण ड्यासबोर्ड हाल विकासको क्रममा छ। यहाँ
+                तपाईंले चाँडै नै तपाईंको सर्वेक्षण डाटाबाट निकालिएको चार्टहरू,
+                प्रवृत्तिहरू र तथ्यांकहरू हेर्न सक्नुहुनेछ।
               </p>
             </div>
           </Card>
@@ -95,49 +93,46 @@ export function AggregateDataView() {
 
         <TabsContent value="about">
           <Card className="p-6">
-            <h3 className="text-xl font-semibold mb-4">About Aggregate Data</h3>
+            <h3 className="text-xl font-semibold mb-4">समग्र डाटाको बारेमा</h3>
 
             <div className="space-y-4">
               <p>
-                The Aggregate Data module provides a unified view of all survey
-                data collected across Buddha Shanti Municipality, bringing
-                together buildings, households, and businesses in a single
-                interface.
+                समग्र डाटा मोड्युलले बुद्धशान्ति नगरपालिकामा संकलित सबै
+                सर्वेक्षण डाटाको एकीकृत दृष्टिकोण प्रदान गर्दछ, भवनहरू,
+                परिवारहरू, र व्यवसायहरूलाई एउटै इन्टरफेसमा एकीकृत गर्दछ।
               </p>
 
               <div className="grid md:grid-cols-3 gap-4 mt-6">
                 <div className="border rounded-lg p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <Building className="h-5 w-5 text-primary" />
-                    <h4 className="font-medium">Buildings</h4>
+                    <h4 className="font-medium">भवनहरू</h4>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    View information about physical structures, including
-                    ownership details, construction materials, and location
-                    data.
+                    स्वामित्व विवरण, निर्माण सामग्री, र स्थान डाटा सहित भौतिक
+                    संरचनाहरूको जानकारी हेर्नुहोस्।
                   </p>
                 </div>
 
                 <div className="border rounded-lg p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <Home className="h-5 w-5 text-primary" />
-                    <h4 className="font-medium">Households</h4>
+                    <h4 className="font-medium">परिवारहरू</h4>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    Access data about residential units, including family
-                    details, agricultural activities, and socioeconomic
-                    information.
+                    परिवार विवरण, कृषि गतिविधिहरू, र सामाजिक-आर्थिक जानकारी सहित
+                    आवासीय एकाइहरूको डाटामा पहुँच गर्नुहोस्।
                   </p>
                 </div>
 
                 <div className="border rounded-lg p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <Store className="h-5 w-5 text-primary" />
-                    <h4 className="font-medium">Businesses</h4>
+                    <h4 className="font-medium">व्यवसायहरू</h4>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    Explore commercial activities, including business types,
-                    employee information, and economic contributions.
+                    व्यवसाय प्रकारहरू, कर्मचारी जानकारी, र आर्थिक योगदानहरू सहित
+                    व्यापारिक गतिविधिहरू अन्वेषण गर्नुहोस्।
                   </p>
                 </div>
               </div>

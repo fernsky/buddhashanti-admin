@@ -2,11 +2,10 @@ import React from "react";
 import { useAggregateStore } from "@/hooks/use-aggregate-store";
 import { api } from "@/trpc/react";
 import { Button } from "@/components/ui/button";
-import { ChevronLeftIcon, ChevronRightIcon, Download } from "lucide-react";
+import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
 import { BuildingRow } from "./BuildingRow";
-import { downloadAsCSV } from "./utils";
 
 export function AggregateTableView() {
   const { filters, pagination, sorting, setPagination, setSorting } =
@@ -73,17 +72,6 @@ export function AggregateTableView() {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        <Button
-          variant="outline"
-          onClick={() => downloadAsCSV(buildings, "aggregate-data.csv")}
-          className="flex items-center gap-2"
-        >
-          <Download className="h-4 w-4" />
-          Export to CSV
-        </Button>
-      </div>
-
       <Card className="overflow-hidden">
         {isLoading ? (
           <div className="p-6 space-y-6">
