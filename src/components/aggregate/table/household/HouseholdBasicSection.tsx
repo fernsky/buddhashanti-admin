@@ -1,63 +1,73 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDate } from "@/lib/utils";
+import { localizeNumber } from "@/lib/utils/localize-number";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export function HouseholdBasicSection({ household }: { household: any }) {
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm">Basic Information</CardTitle>
+        <CardTitle className="text-sm">आधारभूत जानकारी</CardTitle>
       </CardHeader>
-      <CardContent className="text-sm">
-        <div className="grid grid-cols-2 gap-1.5">
-          <div className="text-muted-foreground">ID</div>
-          <div className="font-mono text-xs overflow-hidden overflow-ellipsis">{household.id}</div>
-          
-          <div className="text-muted-foreground">Token</div>
-          <div>{household.household_token}</div>
-          
-          <div className="text-muted-foreground">Ward Number</div>
-          <div>{household.ward_number}</div>
-          
-          <div className="text-muted-foreground">Area Code</div>
-          <div>{household.area_code}</div>
-          
-          <div className="text-muted-foreground">Locality</div>
-          <div>{household.household_locality}</div>
-          
-          <div className="text-muted-foreground">Development Org</div>
-          <div>{household.household_development_organization || "N/A"}</div>
-          
-          <div className="text-muted-foreground">GPS Coordinates</div>
-          <div>
-            {household.household_gps_latitude ? 
-              `${household.household_gps_latitude}, ${household.household_gps_longitude}` : 
-              "N/A"}
-          </div>
-          
-          <div className="text-muted-foreground">GPS Accuracy</div>
-          <div>{household.household_gps_accuracy || "N/A"} m</div>
-          
-          <div className="text-muted-foreground">Head Name</div>
-          <div className="font-medium">{household.head_name}</div>
-          
-          <div className="text-muted-foreground">Head Phone</div>
-          <div>{household.head_phone}</div>
-          
-          <div className="text-muted-foreground">Total Members</div>
-          <div>{household.total_members}</div>
-          
-          <div className="text-muted-foreground">Is Sanitized</div>
-          <div>{household.is_sanitized ? "Yes" : "No"}</div>
-          
-          <div className="text-muted-foreground">Feels Safe</div>
-          <div>{household.feels_safe ? "Yes" : "No"}</div>
-          
-          <div className="text-muted-foreground">Submission Date</div>
-          <div>
-            {household.household_submission_date ? formatDate(household.household_submission_date) : "N/A"}
-          </div>
-        </div>
+      <CardContent className="p-0">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>पहिचान</TableHead>
+              <TableHead>टोकन</TableHead>
+              <TableHead>वडा नं.</TableHead>
+              <TableHead>क्षेत्र कोड</TableHead>
+              <TableHead>स्थान</TableHead>
+              <TableHead>प्रमुखको नाम</TableHead>
+              <TableHead>फोन</TableHead>
+              <TableHead>कुल सदस्य</TableHead>
+              <TableHead>जिपिएस</TableHead>
+              <TableHead>पेश मिति</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            <TableRow>
+              <TableCell className="font-mono text-xs">
+                {household.id}
+              </TableCell>
+              <TableCell>{household.household_token}</TableCell>
+              <TableCell>
+                {localizeNumber(household.ward_number, "ne")}
+              </TableCell>
+              <TableCell>{household.area_code}</TableCell>
+              <TableCell>{household.household_locality}</TableCell>
+              <TableCell className="font-medium">
+                {household.head_name}
+              </TableCell>
+              <TableCell>
+                {localizeNumber(household.head_phone, "ne")}
+              </TableCell>
+              <TableCell>
+                {localizeNumber(household.total_members, "ne")}
+              </TableCell>
+              <TableCell className="text-xs">
+                {household.household_gps_latitude
+                  ? `${localizeNumber(household.household_gps_latitude, "ne")}, ${localizeNumber(household.household_gps_longitude, "ne")}`
+                  : "N/A"}
+                {household.household_gps_accuracy &&
+                  ` (${localizeNumber(household.household_gps_accuracy, "ne")} मि.)`}
+              </TableCell>
+              <TableCell className="text-xs">
+                {household.household_submission_date
+                  ? formatDate(household.household_submission_date)
+                  : "N/A"}
+              </TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
       </CardContent>
     </Card>
   );

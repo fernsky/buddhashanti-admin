@@ -1,119 +1,133 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { localizeNumber } from "@/lib/utils/localize-number";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export function HouseholdAgricultureSection({ household }: { household: any }) {
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm">Agriculture Summary</CardTitle>
+        <CardTitle className="text-sm">कृषि सारांश</CardTitle>
       </CardHeader>
-      <CardContent className="text-sm">
-        <div className="space-y-1.5">
-          <div className="grid grid-cols-2 gap-1.5">
-            <div className="text-muted-foreground">Has Agricultural Land</div>
-            <div>
-              {household.has_agricultural_land ? (
-                <Badge variant="default" className="text-xs">
-                  Yes
-                </Badge>
-              ) : (
-                "No"
-              )}
-            </div>
-
-            <div className="text-muted-foreground">Is Farmer</div>
-            <div>
-              {household.is_farmer ? (
-                <Badge variant="default" className="text-xs">
-                  Yes
-                </Badge>
-              ) : (
-                "No"
-              )}
-            </div>
-
-            <div className="text-muted-foreground">Male Farmers</div>
-            <div>{household.total_male_farmers || 0}</div>
-
-            <div className="text-muted-foreground">Female Farmers</div>
-            <div>{household.total_female_farmers || 0}</div>
-
-            <div className="text-muted-foreground">Months Sustained</div>
-            <div>{household.months_sustained_from_agriculture || "N/A"}</div>
-
-            <div className="text-muted-foreground">Months Involved</div>
-            <div>{household.months_involved_in_agriculture || "N/A"}</div>
-
-            <div className="text-muted-foreground">Has Animal Husbandry</div>
-            <div>
-              {household.has_animal_husbandry ? (
-                <Badge variant="default" className="text-xs">
-                  Yes
-                </Badge>
-              ) : (
-                "No"
-              )}
-            </div>
-
-            <div className="text-muted-foreground">Has Aquaculture</div>
-            <div>
-              {household.has_aquaculture ? (
-                <Badge variant="default" className="text-xs">
-                  Yes
-                </Badge>
-              ) : (
-                "No"
-              )}
-            </div>
-
-            <div className="text-muted-foreground">Has Apiculture</div>
-            <div>
-              {household.has_apiculture ? (
-                <Badge variant="default" className="text-xs">
-                  Yes
-                </Badge>
-              ) : (
-                "No"
-              )}
-            </div>
-          </div>
-
-          {household.has_agricultural_land && (
-            <div className="pt-1.5 mt-1.5 border-t">
-              <div className="text-muted-foreground mb-1">
-                Land Ownership Types
-              </div>
-              <div className="text-xs">
-                {Array.isArray(household.agricultural_land_ownership_types)
-                  ? household.agricultural_land_ownership_types.join(", ")
-                  : household.agricultural_land_ownership_types || "N/A"}
-              </div>
-            </div>
-          )}
-
-          {household.has_animal_husbandry && (
-            <div className="pt-1.5 mt-1.5 border-t">
-              <div className="text-muted-foreground mb-1">Animal Types</div>
-              <div className="text-xs">
-                {Array.isArray(household.animal_types)
-                  ? household.animal_types.join(", ")
-                  : household.animal_types || "N/A"}
-              </div>
-            </div>
-          )}
-
-          <div className="pt-1.5 mt-1.5 border-t">
-            <div className="text-muted-foreground mb-1">
-              Agricultural Machinery
-            </div>
-            <div className="text-xs">
-              {Array.isArray(household.agricultural_machinery)
-                ? household.agricultural_machinery.join(", ")
-                : household.agricultural_machinery || "N/A"}
-            </div>
-          </div>
-        </div>
+      <CardContent className="p-0">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>कृषि भूमि</TableHead>
+              <TableHead>किसान</TableHead>
+              <TableHead>किसान संख्या</TableHead>
+              <TableHead>महिना असर</TableHead>
+              <TableHead>पशुपालन</TableHead>
+              <TableHead>जलकृषि</TableHead>
+              <TableHead>मौरीपालन</TableHead>
+              <TableHead>कृषि उपकरण</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            <TableRow>
+              <TableCell>
+                <div className="space-y-1">
+                  {household.has_agricultural_land ? (
+                    <div>
+                      <Badge variant="default" className="text-xs">
+                        छ
+                      </Badge>
+                    </div>
+                  ) : (
+                    <div>छैन</div>
+                  )}
+                  {household.has_agricultural_land && household.agricultural_land_ownership_types && (
+                    <div className="text-xs text-muted-foreground">
+                      {Array.isArray(household.agricultural_land_ownership_types)
+                        ? household.agricultural_land_ownership_types.join(", ")
+                        : household.agricultural_land_ownership_types}
+                    </div>
+                  )}
+                </div>
+              </TableCell>
+              <TableCell>
+                {household.is_farmer ? (
+                  <Badge variant="default" className="text-xs">
+                    छ
+                  </Badge>
+                ) : (
+                  "छैन"
+                )}
+              </TableCell>
+              <TableCell>
+                <div className="space-y-1 text-xs">
+                  <div>
+                    पुरुष: {localizeNumber(household.total_male_farmers || 0, "ne")}
+                  </div>
+                  <div>
+                    महिला: {localizeNumber(household.total_female_farmers || 0, "ne")}
+                  </div>
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="space-y-1 text-xs">
+                  <div>
+                    धान्य: {localizeNumber(household.months_sustained_from_agriculture || 0, "ne")} महिना
+                  </div>
+                  <div>
+                    संलग्न: {localizeNumber(household.months_involved_in_agriculture || 0, "ne")} महिना
+                  </div>
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="space-y-1">
+                  {household.has_animal_husbandry ? (
+                    <div>
+                      <Badge variant="default" className="text-xs">
+                        छ
+                      </Badge>
+                    </div>
+                  ) : (
+                    <div>छैन</div>
+                  )}
+                  {household.has_animal_husbandry && household.animal_types && (
+                    <div className="text-xs text-muted-foreground">
+                      {Array.isArray(household.animal_types)
+                        ? household.animal_types.join(", ")
+                        : household.animal_types}
+                    </div>
+                  )}
+                </div>
+              </TableCell>
+              <TableCell>
+                {household.has_aquaculture ? (
+                  <Badge variant="default" className="text-xs">
+                    छ
+                  </Badge>
+                ) : (
+                  "छैन"
+                )}
+              </TableCell>
+              <TableCell>
+                {household.has_apiculture ? (
+                  <Badge variant="default" className="text-xs">
+                    छ
+                  </Badge>
+                ) : (
+                  "छैन"
+                )}
+              </TableCell>
+              <TableCell className="text-xs">
+                {Array.isArray(household.agricultural_machinery)
+                  ? household.agricultural_machinery.join(", ")
+                  : household.agricultural_machinery || "N/A"}
+              </TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
       </CardContent>
     </Card>
   );
