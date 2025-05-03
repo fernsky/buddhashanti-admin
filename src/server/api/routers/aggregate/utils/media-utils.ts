@@ -42,6 +42,10 @@ export async function generateMediaUrls<T extends Record<string, any>>(
         case "audio_monitoring":
           result["surveyAudioRecording"] = presignedUrl;
           break;
+          break;
+        case "monitoring_audio":
+          result["surveyAudioRecording"] = presignedUrl;
+          break;
       }
     }
     return result as T & Record<string, string>;

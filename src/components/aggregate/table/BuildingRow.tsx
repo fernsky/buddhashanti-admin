@@ -4,8 +4,12 @@ import { BusinessTable } from "./BusinessTable";
 import { MediaGallery } from "./MediaGallery";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, MapPin, User } from "lucide-react";
+import { Calendar, ChevronDown, ChevronUp, MapPin, User } from "lucide-react";
 import { formatDate } from "@/lib/utils";
+import { localizeNumber } from "@/lib/utils/localize-number";
+import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { CustomAudioPlayer } from "@/components/ui/audio-player";
 
 export function BuildingRow({ building }: { building: any }) {
   const [expanded, setExpanded] = React.useState(true);
@@ -25,183 +29,321 @@ export function BuildingRow({ building }: { building: any }) {
     });
   }
 
-  if (building.buildingEnumeratorSelfie) {
+  if (building.enumeratorSelfie) {
     buildingMedia.push({
-      url: building.buildingEnumeratorSelfie,
+      url: building.enumeratorSelfie,
       type: "image",
       label: "Enumerator Selfie",
     });
   }
 
-  if (building.buildingAudioRecording) {
+  if (building.surveyAudioRecording) {
     buildingMedia.push({
-      url: building.buildingAudioRecording,
+      url: building.surveyAudioRecording,
       type: "audio",
       label: "Audio Recording",
     });
   }
 
   return (
-    <div className="py-6 px-4">
+    <div className="py-6 px-4 border-b">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <h3 className="text-xl font-bold">
-              Building {building.building_id}
-            </h3>
             <Badge
               variant={
                 building.map_status === "validated"
                   ? "default"
                   : building.map_status === "needs_review"
                     ? "destructive"
-                    : "default"
+                    : "outline"
               }
             >
               {building.map_status
                 ? building.map_status.replace(/_/g, " ")
-                : "unverified"}
+                : "अनुगमन नभएको"}
             </Badge>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
               <User className="h-4 w-4" />
-              Owner: {building.building_owner_name || "Unknown"}
+              स्वामित्व: {building.building_owner_name || "अज्ञात"}
               {building.building_owner_phone &&
-                ` (${building.building_owner_phone})`}
+                ` (${localizeNumber(building.building_owner_phone, "ne")})`}
             </div>
 
             <div className="flex items-center gap-2">
               <MapPin className="h-4 w-4" />
-              Ward {building.ward_number}, Area {building.area_code} -{" "}
-              {building.locality}
+              वडा {localizeNumber(building.ward_number, "ne")}, क्षेत्र{" "}
+              {building.area_code} - {building.locality}
             </div>
 
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               {building.building_survey_date
                 ? formatDate(building.building_survey_date)
-                : "No survey date"}
+                : "सर्वेक्षण मिति उपलब्ध छैन"}
             </div>
           </div>
         </div>
 
-        <Button variant="outline" onClick={() => setExpanded(!expanded)}>
-          {expanded ? "Collapse" : "Expand"}
+        <Button
+          variant="outline"
+          onClick={() => setExpanded(!expanded)}
+          className="flex items-center gap-1"
+        >
+          {expanded ? (
+            <>
+              <ChevronUp className="h-4 w-4" /> छोटो देखाउनुहोस्
+            </>
+          ) : (
+            <>
+              <ChevronDown className="h-4 w-4" /> विस्तृत देखाउनुहोस्
+            </>
+          )}
         </Button>
       </div>
 
       {expanded && (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 mb-8">
-            <div className="space-y-4">
-              <h4 className="font-medium text-lg border-b pb-2">
-                Building Details
-              </h4>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                <div className="text-sm text-muted-foreground">
-                  GPS Coordinates
-                </div>
-                <div className="text-sm">
-                  {building.building_gps_latitude?.toString().substring(0, 8)},
-                  {building.building_gps_longitude?.toString().substring(0, 8)}
-                </div>
-
-                <div className="text-sm text-muted-foreground">
-                  GPS Accuracy
-                </div>
-                <div className="text-sm">
-                  {building.building_gps_accuracy} m
+          <Card className="mt-6 mb-8">
+            <CardContent className="p-4 space-y-4">
+              {/* Building Details Section - Now spans full width */}
+              <div>
+                <div className="flex justify-between items-center">
+                  <h3 className="text-sm font-medium flex items-center gap-2 mb-4">
+                    <Badge variant="outline" className="mr-1">
+                      मुख्य
+                    </Badge>
+                    निर्माण विवरण
+                  </h3>
+                  <div className="text-xs text-muted-foreground">
+                    {building.enumerator_name && (
+                      <span>सर्वेक्षक: {building.enumerator_name}</span>
+                    )}
+                  </div>
                 </div>
 
-                <div className="text-sm text-muted-foreground">
-                  Building Base
-                </div>
-                <div className="text-sm">
-                  {building.building_base?.replace(/_/g, " ")}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Construction Details */}
+                  <div className="space-y-2">
+                    <div className="text-xs text-muted-foreground mb-1">
+                      निर्माण सामग्री
+                    </div>
+                    <div className="flex flex-wrap gap-2 text-sm">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs text-muted-foreground">
+                          जग:
+                        </span>
+                        <Badge variant="outline" className="text-xs">
+                          {building.building_base?.replace(/_/g, " ") ||
+                            "अज्ञात"}
+                        </Badge>
+                      </div>
+
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs text-muted-foreground">
+                          भित्ता:
+                        </span>
+                        <Badge variant="outline" className="text-xs">
+                          {building.building_outer_wall?.replace(/_/g, " ") ||
+                            "अज्ञात"}
+                        </Badge>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 text-sm">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs text-muted-foreground">
+                          छत:
+                        </span>
+                        <Badge variant="outline" className="text-xs">
+                          {building.building_roof?.replace(/_/g, " ") ||
+                            "अज्ञात"}
+                        </Badge>
+                      </div>
+
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs text-muted-foreground">
+                          भुइँ:
+                        </span>
+                        <Badge variant="outline" className="text-xs">
+                          {building.building_floor?.replace(/_/g, " ") ||
+                            "अज्ञात"}
+                        </Badge>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <span className="text-xs text-muted-foreground">
+                        स्वामित्व स्थिति:
+                      </span>
+                      <Badge variant="outline" className="text-xs">
+                        {building.building_ownership_status?.replace(
+                          /_/g,
+                          " ",
+                        ) || "अज्ञात"}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  {/* GPS & Location */}
+                  <div>
+                    <div className="text-xs text-muted-foreground mb-1">
+                      स्थानीय विवरण
+                    </div>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex flex-wrap gap-1.5">
+                        <span className="text-xs text-muted-foreground">
+                          जिपिएस:
+                        </span>
+                        <span className="text-xs">
+                          {building.building_gps_latitude
+                            ?.toString()
+                            .substring(0, 8)}
+                          ,
+                          {building.building_gps_longitude
+                            ?.toString()
+                            .substring(0, 8)}
+                          {building.building_gps_accuracy &&
+                            ` (${localizeNumber(building.building_gps_accuracy, "ne")} मि. सटीकता)`}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs text-muted-foreground">
+                          सडकको स्थिति:
+                        </span>
+                        <Badge variant="secondary" className="text-xs">
+                          {building.road_status?.replace(/_/g, " ") || "अज्ञात"}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Access Times */}
+                  <div>
+                    <div className="text-xs text-muted-foreground mb-1">
+                      पहुँचका समयहरू
+                    </div>
+                    <div className="space-y-1 text-xs">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">बजारसम्म:</span>
+                        <span>
+                          {building.time_to_market
+                            ? `${localizeNumber(building.time_to_market, "ne")} मिनेट`
+                            : "अज्ञात"}
+                        </span>
+                      </div>
+
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">सडकसम्म:</span>
+                        <span>
+                          {building.time_to_active_road
+                            ? `${localizeNumber(building.time_to_active_road, "ne")} मिनेट`
+                            : "अज्ञात"}
+                        </span>
+                      </div>
+
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">
+                          स्वास्थ्य संस्थासम्म:
+                        </span>
+                        <span>
+                          {building.time_to_health_organization
+                            ? `${localizeNumber(building.time_to_health_organization, "ne")} मिनेट`
+                            : "अज्ञात"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="text-sm text-muted-foreground">
-                  Building Wall
-                </div>
-                <div className="text-sm">
-                  {building.building_outer_wall?.replace(/_/g, " ")}
-                </div>
+                <Separator className="my-4" />
 
-                <div className="text-sm text-muted-foreground">
-                  Building Roof
-                </div>
-                <div className="text-sm">
-                  {building.building_roof?.replace(/_/g, " ")}
-                </div>
+                {/* Occupancy Summary */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                  <div>
+                    <div className="text-xs text-muted-foreground mb-1">
+                      परिवारहरू
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="text-2xl font-bold">
+                        {localizeNumber(building.total_families || 0, "ne")}
+                      </div>
+                      <div className="text-muted-foreground text-sm">
+                        परिवार(हरू) बस्दछन्
+                      </div>
+                    </div>
+                  </div>
 
-                <div className="text-sm text-muted-foreground">
-                  Building Floor
-                </div>
-                <div className="text-sm">
-                  {building.building_floor?.replace(/_/g, " ")}
-                </div>
-
-                <div className="text-sm text-muted-foreground">Road Status</div>
-                <div className="text-sm">
-                  {building.road_status?.replace(/_/g, " ")}
-                </div>
-
-                <div className="text-sm text-muted-foreground">
-                  Time to Market
-                </div>
-                <div className="text-sm">
-                  {building.time_to_market || "N/A"}
-                </div>
-
-                <div className="text-sm text-muted-foreground">
-                  Time to Active Road
-                </div>
-                <div className="text-sm">
-                  {building.time_to_active_road || "N/A"}
-                </div>
-
-                <div className="text-sm text-muted-foreground">
-                  Time to Health Org
-                </div>
-                <div className="text-sm">
-                  {building.time_to_health_organization || "N/A"}
-                </div>
-
-                <div className="text-sm text-muted-foreground">
-                  Ownership Status
-                </div>
-                <div className="text-sm">
-                  {building.building_ownership_status?.replace(/_/g, " ") ||
-                    "N/A"}
-                </div>
-
-                <div className="text-sm text-muted-foreground">Enumerator</div>
-                <div className="text-sm">
-                  {building.enumerator_name || "Unknown"}
-                </div>
-
-                <div className="text-sm text-muted-foreground">Households</div>
-                <div className="text-sm font-medium">
-                  {building.total_families || 0}
-                </div>
-
-                <div className="text-sm text-muted-foreground">Businesses</div>
-                <div className="text-sm font-medium">
-                  {building.total_businesses || 0}
+                  <div>
+                    <div className="text-xs text-muted-foreground mb-1">
+                      व्यवसायहरू
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="text-2xl font-bold">
+                        {localizeNumber(building.total_businesses || 0, "ne")}
+                      </div>
+                      <div className="text-muted-foreground text-sm">
+                        व्यवसाय(हरू) संचालित छन्
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <MediaGallery media={buildingMedia} />
-          </div>
+              {/* Media Gallery - Now displayed as flex row at the bottom */}
+              {buildingMedia.length > 0 && (
+                <div className="mt-4">
+                  <h4 className="text-sm font-medium mb-2">मिडिया</h4>
+                  <div className="flex flex-wrap gap-4">
+                    {buildingMedia.map((item, index) => (
+                      <div
+                        key={index}
+                        className="flex-1 min-w-[200px] max-w-[300px]"
+                      >
+                        {item.type === "image" ? (
+                          <div className="border rounded-md overflow-hidden">
+                            <div className="px-3 py-2 bg-muted/30 border-b">
+                              <h5 className="text-sm font-medium">
+                                {item.label}
+                              </h5>
+                            </div>
+                            <div className="p-2">
+                              <img
+                                src={item.url}
+                                alt={item.label}
+                                className="w-full h-48 object-cover rounded"
+                              />
+                            </div>
+                          </div>
+                        ) : item.type === "audio" ? (
+                          <div className="border rounded-md overflow-hidden">
+                            <div className="px-3 py-2 bg-muted/30 border-b">
+                              <h5 className="text-sm font-medium">
+                                {item.label}
+                              </h5>
+                            </div>
+                            <div className="p-2">
+                              <CustomAudioPlayer src={item.url} />
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Households */}
           {building.households?.length > 0 && (
             <div className="mt-6">
               <h4 className="font-medium text-lg mb-4 border-b pb-2">
-                Households ({building.households.length})
+                परिवारहरू ({localizeNumber(building.households.length, "ne")})
               </h4>
               <HouseholdTable households={building.households} />
             </div>
@@ -211,7 +353,7 @@ export function BuildingRow({ building }: { building: any }) {
           {building.businesses?.length > 0 && (
             <div className="mt-8">
               <h4 className="font-medium text-lg mb-4 border-b pb-2">
-                Businesses ({building.businesses.length})
+                व्यवसायहरू ({localizeNumber(building.businesses.length, "ne")})
               </h4>
               <BusinessTable businesses={building.businesses} />
             </div>

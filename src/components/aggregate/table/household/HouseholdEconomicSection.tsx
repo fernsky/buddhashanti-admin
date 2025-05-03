@@ -1,14 +1,7 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Separator } from "@/components/ui/separator";
 
 export function HouseholdEconomicSection({ household }: { household: any }) {
   return (
@@ -16,76 +9,144 @@ export function HouseholdEconomicSection({ household }: { household: any }) {
       <CardHeader className="pb-2">
         <CardTitle className="text-sm">आर्थिक जानकारी</CardTitle>
       </CardHeader>
-      <CardContent className="p-0">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>महिला सम्पत्ति</TableHead>
-              <TableHead>बीमा</TableHead>
-              <TableHead>रेमिट्यान्स</TableHead>
-              <TableHead>स्वास्थ्य संस्था</TableHead>
-              <TableHead>आय स्रोत</TableHead>
-              <TableHead>वित्तीय संस्था</TableHead>
-              <TableHead>ऋण उपयोग</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            <TableRow>
-              <TableCell>
-                {household.female_properties || "N/A"}
-              </TableCell>
-              <TableCell>
-                {household.has_insurance ? (
-                  <Badge variant="default" className="text-xs">
-                    छ
-                  </Badge>
-                ) : (
-                  "छैन"
+      <CardContent className="space-y-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-muted-foreground">बीमा:</span>
+            {household.has_insurance ? (
+              <Badge variant="default" className="text-xs">
+                छ
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="text-xs">
+                छैन
+              </Badge>
+            )}
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-muted-foreground">रेमिट्यान्स:</span>
+            {household.has_remittance ? (
+              <Badge variant="default" className="text-xs">
+                छ
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="text-xs">
+                छैन
+              </Badge>
+            )}
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-muted-foreground">
+              महिला सम्पत्ति:
+            </span>
+            <span className="text-sm font-medium">
+              {household.female_properties || "N/A"}
+            </span>
+          </div>
+        </div>
+
+        {household.has_remittance &&
+          Array.isArray(household.remittance_expenses) &&
+          household.remittance_expenses.length > 0 && (
+            <div>
+              <div className="text-xs text-muted-foreground">
+                रेमिट्यान्स खर्च:
+              </div>
+              <div className="text-xs flex flex-wrap gap-1 mt-1">
+                {household.remittance_expenses.map(
+                  (expense: string, idx: number) => (
+                    <Badge
+                      key={idx}
+                      variant="secondary"
+                      className="font-normal"
+                    >
+                      {expense}
+                    </Badge>
+                  ),
                 )}
-              </TableCell>
-              <TableCell>
-                <div className="space-y-1">
-                  {household.has_remittance ? (
-                    <div>
-                      <Badge variant="default" className="text-xs">
-                        छ
-                      </Badge>
-                    </div>
-                  ) : (
-                    <div>छैन</div>
-                  )}
-                  {household.has_remittance && household.remittance_expenses && (
-                    <div className="text-xs text-muted-foreground">
-                      {Array.isArray(household.remittance_expenses)
-                        ? household.remittance_expenses.join(", ")
-                        : household.remittance_expenses}
-                    </div>
-                  )}
-                </div>
-              </TableCell>
-              <TableCell>
-                {household.health_organization || "N/A"}
-                {household.health_organization_other && 
-                  <span className="text-xs text-muted-foreground"> ({household.health_organization_other})</span>}
-              </TableCell>
-              <TableCell className="text-xs">
-                {Array.isArray(household.income_sources)
-                  ? household.income_sources.join(", ")
-                  : household.income_sources || "N/A"}
-              </TableCell>
-              <TableCell className="text-xs">
-                {Array.isArray(household.financial_organizations)
-                  ? household.financial_organizations.join(", ")
-                  : household.financial_organizations || "N/A"}
-              </TableCell>
-              <TableCell className="text-xs">
-                {Array.isArray(household.loan_use)
-                  ? household.loan_use.join(", ")
-                  : household.loan_use || "N/A"}
-              </TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
+              </div>
+            </div>
+          )}
+
+        <Separator />
+
+        <div>
+          <div className="text-xs text-muted-foreground mb-1">
+            स्वास्थ्य संस्था
+          </div>
+          <div className="text-sm">
+            {household.health_organization || "N/A"}
+            {household.health_organization_other && (
+              <span className="text-xs text-muted-foreground">
+                {" "}
+                ({household.health_organization_other})
+              </span>
+            )}
+          </div>
+        </div>
+
+        <Separator />
+
+        {Array.isArray(household.income_sources) &&
+          household.income_sources.length > 0 && (
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">
+                आय स्रोतहरू
+              </div>
+              <div className="flex flex-wrap gap-1 mt-1">
+                {household.income_sources.map((source: string, idx: number) => (
+                  <Badge
+                    key={idx}
+                    variant="secondary"
+                    className="text-xs font-normal"
+                  >
+                    {source}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
+        {Array.isArray(household.financial_organizations) &&
+          household.financial_organizations.length > 0 && (
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">
+                वित्तीय संस्थाहरू
+              </div>
+              <div className="flex flex-wrap gap-1 mt-1">
+                {household.financial_organizations.map(
+                  (org: string, idx: number) => (
+                    <Badge
+                      key={idx}
+                      variant="secondary"
+                      className="text-xs font-normal"
+                    >
+                      {org}
+                    </Badge>
+                  ),
+                )}
+              </div>
+            </div>
+          )}
+
+        {Array.isArray(household.loan_use) && household.loan_use.length > 0 && (
+          <div>
+            <div className="text-xs text-muted-foreground mb-1">ऋण उपयोग</div>
+            <div className="flex flex-wrap gap-1 mt-1">
+              {household.loan_use.map((use: string, idx: number) => (
+                <Badge
+                  key={idx}
+                  variant="secondary"
+                  className="text-xs font-normal"
+                >
+                  {use}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

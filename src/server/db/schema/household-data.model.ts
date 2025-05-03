@@ -45,8 +45,8 @@ export interface HouseholdData {
   solid_waste_management_other?: string | null;
 
   // Energy and facilities
-  primary_cooking_fuel: string;
-  primary_energy_source: string;
+  primary_cooking_fuel: string[];
+  primary_energy_source: string[];
   primary_energy_source_other?: string | null;
   facilities: string[];
 
@@ -55,7 +55,7 @@ export interface HouseholdData {
   loaned_organizations: string[];
   loan_use: string[];
   financial_organizations: string[];
-  has_insurance: boolean;
+  has_insurance: string[];
   health_organization: string;
   health_organization_other?: string | null;
   income_sources: string[];
@@ -94,7 +94,13 @@ export interface HouseholdData {
 
   // Aquaculture and apiculture
   has_aquaculture: boolean;
+  pond_count: number | null;
+  pond_area: number | null;
+  fish_production: number | null;
+
   has_apiculture: boolean;
+  hive_count: number | null;
+  honey_production: number | null;
 
   // Birth place and prior location
   birth_place: string;
@@ -120,6 +126,7 @@ export interface HouseholdData {
   animals?: AnimalData[];
   animal_products?: AnimalProductData[];
   deaths?: DeathData[];
+  absentees?: AbsenteeData[];
 
   // Metadata
   created_at?: string;
@@ -188,15 +195,15 @@ interface HouseholdMemberData {
   work_availability?: string | null;
 
   // Absentee
-  ward_number: number;
-  absentee_name: string;
-  education_level: string;
-  absence_reason: string;
-  location: string;
-  province?: string | null;
-  district?: string | null;
-  country?: string | null;
-  sends_remittance: boolean;
+  // Absentee
+  is_absent?: boolean;
+  absence_education_level?: string;
+  absence_reason?: string;
+  absence_location?: string;
+  absence_province?: string | null;
+  absence_district?: string | null;
+  absence_country?: string | null;
+  sends_remittance?: boolean;
   remittance_amount?: number | null;
 }
 
@@ -268,4 +275,24 @@ interface DeathData {
   deceased_age: number;
   deceased_death_cause: string;
   deceased_fertility_death_condition?: string | null;
+}
+
+/**
+ * Absentee data embedded within HouseholdData
+ */
+interface AbsenteeData {
+  id: string;
+  household_id: string;
+  ward_number: number;
+  absentee_name: string;
+  gender: string;
+  age: number;
+  absence_education_level: string;
+  absence_reason: string;
+  location: string;
+  province?: string | null;
+  district?: string | null;
+  country?: string | null;
+  sends_remittance: boolean;
+  remittance_amount?: number | null;
 }

@@ -1,5 +1,6 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CustomAudioPlayer } from "@/components/ui/audio-player";
 
 type MediaItem = {
   url: string;
@@ -22,6 +23,7 @@ export function HouseholdMedia({ media }: { media: MediaItem[] }) {
       </Card>
     );
   }
+  console.log("HouseholdMedia", media);
 
   return (
     <Card>
@@ -41,10 +43,7 @@ export function HouseholdMedia({ media }: { media: MediaItem[] }) {
                 />
               </div>
             ) : item.type === "audio" && item.url ? (
-              <audio controls className="w-full h-10">
-                <source src={item.url} />
-                Your browser does not support the audio element.
-              </audio>
+              <CustomAudioPlayer src={item.url} />
             ) : (
               <div className="flex items-center justify-center h-20 bg-muted/20 rounded-md border">
                 <p className="text-sm text-muted-foreground">
