@@ -10,46 +10,51 @@ type MediaItem = {
 export function HouseholdMedia({ media }: { media: MediaItem[] }) {
   if (!media || media.length === 0) {
     return (
-      <div className="text-center py-8 text-muted-foreground">
-        No media available for this household
-      </div>
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm">Media</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center h-32 bg-muted/20 rounded-md">
+            <p className="text-sm text-muted-foreground">No media available</p>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {media.map((item, index) => (
-        <Card key={index}>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-md">{item.label}</CardTitle>
-          </CardHeader>
-          <CardContent>
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm">Media</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {media.map((item, index) => (
+          <div key={index} className="space-y-1">
+            <div className="text-xs text-muted-foreground">{item.label}</div>
             {item.type === "image" && item.url ? (
-              <img
-                src={item.url}
-                alt={item.label}
-                className="w-full rounded-md object-contain max-h-[300px]"
-              />
+              <div className="rounded-md overflow-hidden border">
+                <img
+                  src={item.url}
+                  alt={item.label}
+                  className="w-full object-contain max-h-[150px]"
+                />
+              </div>
             ) : item.type === "audio" && item.url ? (
-              <audio controls className="w-full">
+              <audio controls className="w-full h-10">
                 <source src={item.url} />
                 Your browser does not support the audio element.
               </audio>
-            ) : item.type === "video" && item.url ? (
-              <video controls className="w-full">
-                <source src={item.url} />
-                Your browser does not support the video element.
-              </video>
             ) : (
-              <div className="flex items-center justify-center h-32 bg-muted/20 rounded">
+              <div className="flex items-center justify-center h-20 bg-muted/20 rounded-md border">
                 <p className="text-sm text-muted-foreground">
                   Media unavailable
                 </p>
               </div>
             )}
-          </CardContent>
-        </Card>
-      ))}
-    </div>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
   );
 }
