@@ -15,6 +15,8 @@ import {
   Home,
   PersonStanding,
   PlusCircle,
+  Watch,
+  Gauge,
 } from "lucide-react";
 
 export type Role = "admin" | "superadmin" | "enumerator";
@@ -116,6 +118,13 @@ const menuConfig: Menu[] = [
     label: "Aggregate Data",
     icon: PlusCircle,
     roles: ["admin", "superadmin", "enumerator"],
+  },
+  {
+    href: "/cbs-comparison",
+    label: "CBS Comparison",
+    icon: Gauge, 
+    roles: ["admin", "superadmin"],
+    submenus: [],
   },
   {
     href:"/wardwise",
