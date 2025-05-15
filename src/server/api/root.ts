@@ -34,8 +34,6 @@ export const appRouter = createTRPCRouter({
   analytics: analyticsRouter,
   enumWise: enumwiseRouter,
   aggregate: aggregateRouter, // Add the aggregate router
-  analytics:analyticsRouter,
-  enumWise:enumwiseRouter,
   cbsHousehold: householdCBSRouter,
   cbsPopulation: populationCBSRouter,
 });
