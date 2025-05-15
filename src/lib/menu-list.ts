@@ -14,6 +14,7 @@ import {
   Paperclip,
   Home,
   PersonStanding,
+  PlusCircle,
 } from "lucide-react";
 
 export type Role = "admin" | "superadmin" | "enumerator";
@@ -109,6 +110,12 @@ const menuConfig: Menu[] = [
     icon: Paperclip, 
     roles: ["admin", "superadmin"],
     submenus: [],
+  },
+   {
+    href: "/aggregate",
+    label: "Aggregate Data",
+    icon: PlusCircle,
+    roles: ["admin", "superadmin", "enumerator"],
   },
   {
     href:"/wardwise",
