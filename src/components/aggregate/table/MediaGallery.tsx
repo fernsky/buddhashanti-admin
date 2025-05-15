@@ -1,4 +1,5 @@
 import React from "react";
+import { CustomAudioPlayer } from "@/components/ui/audio-player";
 
 type MediaItem = {
   url: string;
@@ -35,10 +36,7 @@ export function MediaGallery({ media }: { media: MediaItem[] }) {
             )}
 
             {item.type === "audio" && item.url && (
-              <audio controls className="w-full">
-                <source src={item.url} />
-                Your browser does not support the audio element.
-              </audio>
+              <CustomAudioPlayer src={item.url} />
             )}
 
             {item.type === "video" && item.url && (

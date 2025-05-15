@@ -1,12 +1,31 @@
 import { AggregateDataView } from "@/components/aggregate/AggregateDataView";
 import { Metadata } from "next";
+import { ContentLayout } from "@/components/admin-panel/content-layout";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, Download } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Aggregate Data | Buddha Shanti Municipality Survey",
+  title: "समग्र डाटा | बुद्धशान्ति नगरपालिका सर्वेक्षण",
   description:
-    "View and analyze aggregated survey data for Buddha Shanti Municipality",
+    "बुद्धशान्ति नगरपालिकाको समग्र सर्वेक्षण डाटा हेर्नुहोस् र विश्लेषण गर्नुहोस्",
 };
 
 export default function AggregatePage() {
-  return <AggregateDataView />;
+  return (
+    <ContentLayout
+      title="समग्र डाटा"
+      subtitle="बुद्धशान्ति नगरपालिकाको सबै सर्वेक्षण डाटाको एकीकृत दृष्टिकोण"
+      actions={
+        <Button variant="outline" asChild>
+          <Link href="/dashboard">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            ड्यासबोर्डमा फर्कनुहोस्
+          </Link>
+        </Button>
+      }
+    >
+      <AggregateDataView />
+    </ContentLayout>
+  );
 }
