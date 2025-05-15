@@ -14,13 +14,10 @@ import {
   Paperclip,
   Home,
   PersonStanding,
-<<<<<<< HEAD
   PlusCircle,
   Watch,
   Gauge,
-=======
   Cloud,
->>>>>>> 829bba76c3e62eeed3da1b60c0b3d42af86f5c92
 } from "lucide-react";
 
 export type Role = "admin" | "superadmin" | "enumerator";
