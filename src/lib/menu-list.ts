@@ -121,6 +121,13 @@ const menuConfig: Menu[] = [
     roles: ["admin", "superadmin", "enumerator"],
   },
   {
+    href: "/remaining-locations",
+    label: "Remaining Locations",
+    icon: Watch, 
+    roles: ["admin", "superadmin"],
+    submenus: [],
+  },
+  {
     href: "/cbs-comparison",
     label: "CBS Comparison",
     icon: Gauge, 
