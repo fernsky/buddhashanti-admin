@@ -14,6 +14,9 @@ import {
   Paperclip,
   Home,
   PersonStanding,
+  PlusCircle,
+  Watch,
+  Gauge,
   Cloud,
 } from "lucide-react";
 
@@ -109,6 +112,26 @@ const menuConfig: Menu[] = [
     label: "पेश गरिएका डाटा",
     icon: Paperclip,
     roles: ["admin", "superadmin", "enumerator"],
+    submenus: [],
+  },
+   {
+    href: "/aggregate",
+    label: "Aggregate Data",
+    icon: PlusCircle,
+    roles: ["admin", "superadmin", "enumerator"],
+  },
+  {
+    href: "/remaining-locations",
+    label: "Remaining Locations",
+    icon: Watch, 
+    roles: ["admin", "superadmin"],
+    submenus: [],
+  },
+  {
+    href: "/cbs-comparison",
+    label: "CBS Comparison",
+    icon: Gauge, 
+    roles: ["admin", "superadmin"],
     submenus: [],
   },
   {
