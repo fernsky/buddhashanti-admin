@@ -19,6 +19,7 @@ import {
   Gauge,
   Cloud,
 } from "lucide-react";
+import { Form } from "react-hook-form";
 
 export type Role = "admin" | "superadmin" | "enumerator";
 
@@ -112,6 +113,13 @@ const menuConfig: Menu[] = [
     label: "पेश गरिएका डाटा",
     icon: Paperclip,
     roles: ["admin", "superadmin"],
+    submenus: [],
+  },
+  {
+    href: "/form-archive",
+    label: "Physical Form Submission",
+    icon: FormInput,
+    roles: ["admin", "superadmin", "enumerator"],
     submenus: [],
   },
    {
