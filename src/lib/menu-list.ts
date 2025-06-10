@@ -112,7 +112,7 @@ const menuConfig: Menu[] = [
     href: "/submissions",
     label: "पेश गरिएका डाटा",
     icon: Paperclip,
-    roles: ["admin", "superadmin"],
+    roles: ["admin", "superadmin", "enumerator"],
     submenus: [],
   },
   {
@@ -146,21 +146,21 @@ const menuConfig: Menu[] = [
     href: "/wardwise",
     label: "वडागत डाटा",
     icon: Home,
-    roles: ["admin", "superadmin"],
+    roles: ["admin", "superadmin", "enumerator"],
     submenus: [],
   },
   {
     href: "/enumeratorwise",
     label: "सर्वेक्षक अनुसार डाटा",
     icon: PersonStanding,
-    roles: ["admin", "superadmin"],
+    roles: ["admin", "superadmin", "enumerator"],
     submenus: [],
   },
   {
     href: "/aggregate",
     label: "समग्र डाटा",
     icon: Cloud,
-    roles: ["admin", "superadmin"],
+    roles: ["admin", "superadmin", "enumerator"],
     submenus: [],
   },
   {
